@@ -1,0 +1,16 @@
+{
+  "name": "掼蛋",
+  "short_name": "掼蛋",
+  "description": "单机掼蛋：你和电脑对家组队对抗两家电脑",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b4d33",
+  "theme_color": "#0b4d33",
+  "lang": "zh-CN",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
