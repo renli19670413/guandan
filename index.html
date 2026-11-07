@@ -37,7 +37,7 @@ html,body{height:100%;overflow:hidden;background:var(--felt);color:var(--ink);fo
 .cnt{background:rgba(0,0,0,.35);border-radius:9px;padding:1px 7px;font-size:12px}
 .cnt.low{background:#c62828}
 .badge{background:var(--gold);color:#5a3b00;border-radius:4px;padding:0 4px;font-size:11px;font-weight:700}
-.played{display:flex;align-items:center;min-height:50px;position:relative}
+.played{isolation:isolate;display:flex;align-items:center;min-height:50px;position:relative}
 .seatTop .played{justify-content:center}
 .pl3{justify-content:flex-start}.pl1{justify-content:flex-end}
 #myPlayed{justify-content:center;min-height:56px}
@@ -52,7 +52,7 @@ html,body{height:100%;overflow:hidden;background:var(--felt);color:var(--ink);fo
 .btn{border:0;border-radius:20px;padding:9px 16px;font-size:15px;font-weight:600;color:#fff;min-width:64px}
 .btn:disabled{opacity:.35}
 #bHint{background:#5c6bc0}#bPass{background:#78909c}#bPlay{background:#ff8f00}#bRet{background:#8e24aa}
-#hand{flex:1 1 auto;position:relative;min-height:170px;touch-action:none;overflow:hidden}
+#hand{flex:1 1 auto;position:relative;z-index:0;isolation:isolate;min-height:170px;touch-action:none;overflow:hidden}
 .card{position:absolute;background:var(--card);color:var(--cardInk);border-radius:.12em;border:1px solid #9a9a9a;box-shadow:-2px 0 3px rgba(0,0,0,.22)}
 .card.red{color:var(--red)}
 .card .cor{position:absolute;left:.04em;top:.03em;width:.44em;text-align:center;line-height:.95}
@@ -67,6 +67,7 @@ html,body{height:100%;overflow:hidden;background:var(--felt);color:var(--ink);fo
 .card.wild.sel{background:#ffd36b}
 /* ---- 横屏布局 ---- */
 #app.rot{position:fixed;top:0;left:100vw;width:100vh;width:100dvh;height:100vw;transform-origin:top left;transform:rotate(90deg)}
+#app.rotL{position:fixed;top:100vh;top:100dvh;left:0;width:100vh;width:100dvh;height:100vw;transform-origin:top left;transform:rotate(-90deg)}
 body.land #app{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) minmax(150px,47%);grid-template-areas:"bar bar" "table table" "hand actions"}
 body.land #bar{grid-area:bar;padding:4px 10px}
 body.land #msg{grid-area:bar;justify-self:center;align-self:center;max-width:36%;pointer-events:none;min-height:0}
@@ -91,7 +92,7 @@ body.land #modal .box{max-height:92%}
 @media (prefers-reduced-motion: reduce){.pass,.ctag{animation:none}}
 #toast{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 18px;border-radius:10px;font-size:15px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:50;max-width:80vw;text-align:center}
 #toast.show{opacity:1}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}
+#modal{position:fixed;inset:0;isolation:isolate;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}
 #modal.show{display:flex}
 #modal .box{background:#fff;color:#222;border-radius:14px;padding:18px 18px 14px;width:100%;max-width:420px;max-height:86vh;overflow:auto;-webkit-user-select:text;user-select:text}
 #modal h2{font-size:19px;margin-bottom:10px;text-align:center}
@@ -552,7 +553,7 @@ const PASS_WORDS=['不要','要不起','过'];
 document.addEventListener('pointerdown',()=>{ac();if('speechSynthesis' in window&&SND.mode==='all'){try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}}},{once:true,capture:true});
 
 // 屏幕坐标位移 → 容器内位移（旋转90°时需要换轴）
-function vec(dx,dy){return $('#app').classList.contains('rot')?`translate(${dy}px,${-dx}px)`:`translate(${dx}px,${dy}px)`;}
+function vec(dx,dy){const c=$('#app').classList;return c.contains('rot')?`translate(${dy}px,${-dx}px)`:c.contains('rotL')?`translate(${-dy}px,${dx}px)`:`translate(${dx}px,${dy}px)`;}
 function shake(big){
   if(RM||AUTO)return;
   $('#app').animate(big?
@@ -966,36 +967,56 @@ function setSnd(m){SND.mode=m;try{localStorage.setItem('guandan_snd',m);}catch(e
 $('#bSnd').onclick=()=>{setSnd(SND.mode==='all'?'sfx':SND.mode==='sfx'?'off':'all');toast('声音：'+SND_NAME[SND.mode],1000);};
 $('#bMenu').onclick=()=>modal('菜单',`<p>电脑难度：<b>${G.diff==='hard'?'困难':'普通'}</b>　声音：<b>${SND_NAME[SND.mode]}</b></p>`,
   [['电脑难度',openDiff],['声音',()=>modal('声音',`<p>当前：<b>${SND_NAME[SND.mode]}</b></p><p style="color:#777">语音报牌使用手机自带的中文朗读；iPhone 需关闭静音开关才能听到。</p>`,
-    [['音效+语音',()=>setSnd('all')],['仅音效',()=>setSnd('sfx')],['静音',()=>setSnd('off'),true]])],['战绩',openStats],['规则',openRules],['重新开始',openNew],['关闭',null,true]]);
-let forceLand=false;try{forceLand=localStorage.getItem('guandan_land')==='1';}catch(e){}
+    [['音效+语音',()=>setSnd('all')],['仅音效',()=>setSnd('sfx')],['静音',()=>setSnd('off'),true]])],['屏幕方向',openOrient],['战绩',openStats],['规则',openRules],['重新开始',openNew],['退出游戏',openExit],['关闭',null,true]]);
+// 屏幕方向：auto=跟随手机，portrait=竖屏，landscape=横屏（与手机方向不一致时把画面转90°）
+let orient='auto';try{const o=localStorage.getItem('guandan_orient');if(o==='portrait'||o==='landscape')orient=o;localStorage.removeItem('guandan_land');}catch(e){}
+const ORIENT_NAME={auto:'跟随手机',portrait:'竖屏',landscape:'横屏'};
 function updateOrient(){
-  const portrait=innerHeight>innerWidth;
-  $('#app').classList.toggle('rot',forceLand&&portrait);
-  document.body.classList.toggle('land',!portrait||forceLand);
-  $('#bRot').textContent=forceLand?'竖屏':'横屏';
-  $('#bRot').hidden=!portrait&&!forceLand;
+  const phonePortrait=innerHeight>=innerWidth;
+  const wantLand=orient==='auto'?!phonePortrait:orient==='landscape';
+  const c=$('#app').classList;
+  c.toggle('rot',wantLand&&phonePortrait);
+  c.toggle('rotL',!wantLand&&!phonePortrait);
+  document.body.classList.toggle('land',wantLand);
+  $('#bRot').textContent=wantLand?'竖屏':'横屏';
   renderHand();
 }
-$('#bRot').onclick=async()=>{
-  forceLand=!forceLand;try{localStorage.setItem('guandan_land',forceLand?'1':'0');}catch(e){}
-  if(forceLand){try{if(document.documentElement.requestFullscreen&&!document.fullscreenElement)await document.documentElement.requestFullscreen();await screen.orientation.lock('landscape');}catch(e){}}
-  else{try{screen.orientation.unlock();}catch(e){}try{if(document.fullscreenElement)await document.exitFullscreen();}catch(e){}}
-  updateOrient();setTimeout(updateOrient,400);
-};
+function setOrient(o){
+  const phonePortrait=innerHeight>=innerWidth;
+  if((o==='portrait'&&phonePortrait)||(o==='landscape'&&!phonePortrait))o='auto'; // 与手机一致就直接跟随手机
+  orient=o;try{localStorage.setItem('guandan_orient',o);}catch(e){}
+  updateOrient();
+}
+$('#bRot').onclick=()=>{setOrient(document.body.classList.contains('land')?'portrait':'landscape');toast('画面：'+(document.body.classList.contains('land')?'横屏':'竖屏'),900);};
+const openOrient=()=>modal('屏幕方向',`<p>当前：<b>${ORIENT_NAME[orient]}</b></p><p style="color:#777">“跟随手机”会随手机转动自动切换；选竖屏或横屏后，即使手机方向不同也会把画面转过来。顶栏的按钮可随时一键切换。</p>`,
+  [['跟随手机',()=>setOrient('auto')],['竖屏',()=>setOrient('portrait')],['横屏',()=>setOrient('landscape')],['取消',null,true]]);
 window.addEventListener('resize',updateOrient);
 window.addEventListener('orientationchange',()=>setTimeout(updateOrient,300));
 updateOrient();
 
 if('serviceWorker' in navigator&&/^https:$/.test(location.protocol)&&/github\.io$/.test(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+function showHome(){
+  if(G.round>0&&!(G.declarer===null&&G.levels[0]===2&&G.levels[1]===2&&!G.prevFinish)){
+    modal('掼蛋',`<p style="text-align:center">上次进度：我方打 <b>${RT[G.levels[0]]}</b>，对方打 <b>${RT[G.levels[1]]}</b>，本场积分 <b>${sgn(G.gameScore||0)}</b></p>`,
+      [['继续游戏',startRound],['重新开始',()=>{resetGame();startRound();},true],['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='返回';b.onclick=()=>{$('#modal').classList.remove('show');showHome();};},true]]);
+  }else{
+    modal('掼蛋','<p>你与<b>对家</b>（屏幕上方）组队，对抗左右两位电脑。先过A的一方获胜。</p>'+RULES,[['开始游戏',startRound]]);
+  }
+}
+function exitGame(){
+  G.token++;save();
+  try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}
+  G.phase='idle';G.hands=[[],[],[],[]];G.finish=[];G.disp=[null,null,null,null];G.lastPlay=null;sel.clear();
+  setMsg('已退出，进度已保存');render();
+  try{window.close();}catch(e){}   // 安装到桌面的应用可直接关闭；浏览器里则回到开始界面
+  setTimeout(showHome,250);
+}
+const openExit=()=>modal('退出游戏',`<p>退出后会保存当前级数和积分（我方 <b>${RT[G.levels[0]]}</b> · 对方 <b>${RT[G.levels[1]]}</b>）。</p><p style="color:#777">正在打的这一局不保存，下次继续时重新发牌。</p>`,
+  [['退出',exitGame],['取消',null,true]]);
 const had=load();
 render();
 if(AUTO){startRound();}
-else if(had&&G.round>0){
-  modal('掼蛋',`<p style="text-align:center">检测到上次进度：我方打 <b>${RT[G.levels[0]]}</b>，对方打 <b>${RT[G.levels[1]]}</b></p>`,
-    [['继续',startRound],['重新开始',()=>{resetGame();startRound();},true]]);
-}else{
-  modal('掼蛋','<p>你与<b>对家</b>（屏幕上方）组队，对抗左右两位电脑。先过A的一方获胜。</p>'+RULES,[['开始游戏',startRound]]);
-}
+else showHome();
 </script>
 </body>
 </html>
