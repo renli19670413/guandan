@@ -85,6 +85,17 @@ body.land #me{flex:0 0 auto;justify-content:center}
 body.land .btn{padding:6px 16px}
 body.land #actions{gap:5px}
 body.land #modal .box{max-height:92%}
+/* 横屏：结算窗口紧凑排版，左边名次、右边得分 */
+body.land #modal{padding:6px}
+body.land #modal .box{padding:10px 16px 10px;max-width:680px}
+body.land #modal h2{font-size:16px;margin-bottom:4px}
+body.land #modal .body{font-size:13px;line-height:1.4}
+body.land #modal .body td{padding:2px 6px}
+body.land #modal .body p{margin:2px 0}
+body.land #modal .mbtns{margin-top:8px;gap:8px}
+body.land #modal .mbtns button{padding:7px 18px;font-size:14px}
+body.land .res{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:center}
+body.land .res table{margin:0}
 @keyframes pop{from{transform:scale(.4);opacity:0}}
 .pass{animation:pop .25s ease-out}
 .ctag{animation:pop .3s ease-out}
@@ -883,6 +894,7 @@ function advance(){
   }
   G.turn=nextActive(G.turn);schedule();
 }
+const resWrap=b=>'<div class="res">'+b.replace('</table>','</table><div>')+'</div></div>';
 function endRound(){
   G.phase='over';
   const f=G.finish.slice();
@@ -909,7 +921,7 @@ function endRound(){
     render();
     if(AUTO){window.__games=(window.__games||0)+1;later(startRound,50);return;}
     sfx(wt===0?'win':'lose');say(wt===0?'恭喜过A，我方获胜':'对方过A获胜',true);
-    modal('比赛结束',body,[['再来一场',startRound],['查看战绩',openStats,true]]);return;
+    modal('比赛结束',resWrap(body),[['再来一场',startRound],['查看战绩',openStats,true]]);return;
   }
   const tag=up===3?'双下':up===2?'':'';
   body+=`<p class="${wt===0?'up':'down'}">${wt===0?'我方':'对方'}升${up}级${tag?'（'+tag+'）':''}</p>`;
@@ -920,7 +932,7 @@ function endRound(){
   save();render();
   if(AUTO){window.__rounds=(window.__rounds||0)+1;later(startRound,50);return;}
   sfx(wt===0?'win':'lose');
-  modal(`第${G.round}局结束`,body,[['下一局',startRound],['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='下一局';b.onclick=()=>{$('#modal').classList.remove('show');startRound();};},true]]);
+  modal(`第${G.round}局结束`,resWrap(body),[['下一局',startRound],['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='下一局';b.onclick=()=>{$('#modal').classList.remove('show');startRound();};},true]]);
 }
 
 /* ================= 玩家操作 ================= */
