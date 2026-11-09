@@ -49,9 +49,9 @@ html,body{height:100%;overflow:hidden;background:var(--felt);color:var(--ink);fo
 #me{font-size:12px;color:var(--muted);flex:1;display:flex;align-items:center;gap:6px}
 #me .avatar{width:30px;height:30px;font-size:12px}
 #me.turn .avatar{box-shadow:0 0 0 3px var(--gold)}
-.btn{border:0;border-radius:20px;padding:9px 16px;font-size:15px;font-weight:600;color:#fff;min-width:64px}
+.btn{border:0;border-radius:20px;padding:9px 12px;font-size:15px;font-weight:600;color:#fff;min-width:54px}
 .btn:disabled{opacity:.35}
-#bHint{background:#5c6bc0}#bPass{background:#78909c}#bPlay{background:#ff8f00}#bRet{background:#8e24aa}
+#bSort{background:#26a69a}#bHint{background:#5c6bc0}#bPass{background:#78909c}#bPlay{background:#ff8f00}#bRet{background:#8e24aa}
 #hand{flex:1 1 auto;position:relative;z-index:0;isolation:isolate;min-height:170px;touch-action:none;overflow:hidden}
 .card{position:absolute;background:var(--card);color:var(--cardInk);border-radius:.12em;border:1px solid #9a9a9a;box-shadow:-2px 0 3px rgba(0,0,0,.22)}
 .card.red{color:var(--red)}
@@ -82,7 +82,8 @@ body.land #myPlayed{grid-area:me;min-height:50px}
 body.land #hand{grid-area:hand;min-height:0}
 body.land #actions{grid-area:actions;flex-direction:column;justify-content:center;align-items:stretch;padding:4px 12px 8px 4px;gap:7px;min-height:0}
 body.land #me{flex:0 0 auto;justify-content:center}
-body.land .btn{padding:8px 18px}
+body.land .btn{padding:6px 16px}
+body.land #actions{gap:5px}
 body.land #modal .box{max-height:92%}
 @keyframes pop{from{transform:scale(.4);opacity:0}}
 .pass{animation:pop .25s ease-out}
@@ -122,6 +123,7 @@ body.land #modal .box{max-height:92%}
   </div>
   <div id="actions">
     <div id="me"></div>
+    <button class="btn" id="bSort">理牌</button>
     <button class="btn" id="bHint">提示</button>
     <button class="btn" id="bPass">不出</button>
     <button class="btn" id="bPlay">出牌</button>
@@ -648,7 +650,7 @@ function cardHTML(c,L,cls,style){
   return `<div class="${k}" data-id="${c.id}" style="${style}">${inner}</div>`;
 }
 function sortForShow(cards,L){
-  return cards.slice().sort((a,b)=>(isW(b,L)-isW(a,L))||cval(b,L)-cval(a,L)||SUIT_ORD[a.suit]-SUIT_ORD[b.suit]);
+  return cards.slice().sort((a,b)=>(isW(a,L)-isW(b,L))||cval(a,L)-cval(b,L)||SUIT_ORD[a.suit]-SUIT_ORD[b.suit]);
 }
 function miniHTML(cards,L){
   const cs=sortForShow(cards,L);const cw=32,step=15;
@@ -688,10 +690,15 @@ function renderBar(){
 function renderHand(){
   const el=$('#hand');const W=el.clientWidth,H=el.clientHeight,L=G.level;
   const hand=G.hands[0];
-  const cols=[];const wild=hand.filter(c=>isW(c,L));if(wild.length)cols.push(wild);
+  const cols=[],byId=new Map(hand.map(c=>[c.id,c])),used=new Set();
+  G.groups=(G.groups||[]).map(g=>g.filter(id=>byId.has(id))).filter(g=>g.length);
+  for(const g of G.groups){cols.push(sortForShow(g.map(id=>byId.get(id)),L));g.forEach(id=>used.add(id));}
+  const rest=hand.filter(c=>!used.has(c.id));
   const groups=new Map();
-  for(const c of sortForShow(hand.filter(c=>!isW(c,L)),L)){const k=c.rank;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(c);}
+  for(const c of sortForShow(rest.filter(c=>!isW(c,L)),L)){const k=c.rank;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(c);}
   for(const g of groups.values())cols.push(g);
+  const wild=sortForShow(rest.filter(c=>isW(c,L)),L);if(wild.length)cols.push(wild);
+  updSortBtn();
   if(!cols.length){el.innerHTML='';return;}
   const n=cols.length,maxS=Math.max(...cols.map(c=>c.length));
   let cw=Math.min(68,Math.max(40,Math.floor(W/7.2)));let ch=Math.round(cw*1.42);
@@ -724,11 +731,21 @@ function renderHand(){
       e.animate([{transform:vec(dx,dy)},{transform:'none'}],{duration:230,easing:'ease-out'});}
   }
 }
+function updSortBtn(){const b=$('#bSort');if(!b)return;b.textContent=(!sel.size&&G.groups&&G.groups.length)?'还原':'理牌';}
+function humanSort(){
+  if(sel.size){
+    const ids=[...sel];
+    G.groups=(G.groups||[]).map(g=>g.filter(id=>!sel.has(id))).filter(g=>g.length);
+    G.groups.push(ids);sel.clear();hintList=[];sfx('deal');renderHand();
+  }else if(G.groups&&G.groups.length){G.groups=[];sfx('deal');renderHand();toast('已恢复自动排序',900);}
+  else toast('先选中要放在一起的牌，再点“理牌”',1600);
+}
 function renderActions(){
   const my=G.phase==='play'&&G.turn===0&&!G.wait&&!AUTO;
   const ret=G.phase==='return';
   $('#bHint').style.display=ret?'none':'';$('#bPass').style.display=ret?'none':'';$('#bPlay').style.display=ret?'none':'';
   $('#bRet').style.display=ret?'':'none';
+  $('#bSort').disabled=!G.hands[0].length;
   $('#bHint').disabled=!my;$('#bPlay').disabled=!my;$('#bPass').disabled=!my||!G.lastPlay;
 }
 const SND_TXT={all:'🔊',sfx:'🔉',off:'🔇'};
@@ -756,7 +773,7 @@ function startRound(){
   const deck=makeDeck();
   for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
   G.hands=[0,1,2,3].map(s=>deck.slice(s*27,s*27+27));
-  G.dealAnim=true;G.finish=[];G.played=[];G.passInfo=[[],[],[],[]];G.disp=[null,null,null,null];G.lastPlay=null;G.passed=new Set();G.phase='deal';G.wait=false;sel.clear();
+  G.dealAnim=true;G.groups=[];G.finish=[];G.played=[];G.passInfo=[[],[],[],[]];G.disp=[null,null,null,null];G.lastPlay=null;G.passed=new Set();G.phase='deal';G.wait=false;sel.clear();
   render();
   if(G.prevFinish){later(runTribute,1300);}
   else{const l=Math.floor(Math.random()*4);setMsg(`第${G.round}局 · 随机由【${NAMES[l]}】先出`);later(()=>startPlay(l),1300);}
@@ -781,6 +798,7 @@ function runTribute(){
     G.hands[x.from]=minus(G.hands[x.from],[x.card]);x.card.recv=x.to===0;G.hands[x.to].push(x.card);
     txt.push(`${NAMES[x.from]}进贡${cardTxt(x.card)}给${NAMES[x.to]}`);
   }
+  G.groups=[];
   G.returns=pairs.map(x=>({from:x.to,to:x.from}));G.leaderAfter=leader;
   for(const r of G.returns){
     if(r.from===0&&!AUTO)continue;
@@ -799,7 +817,7 @@ function humanReturn(){
   const c=hand.find(x=>sel.has(x.id));
   const hasLow=hand.some(x=>!isW(x,L)&&x.rank<=10);
   if(hasLow&&(isW(c,L)||c.rank>10)){toast('还贡须是10及以下的牌');return;}
-  G.hands[0]=minus(hand,[c]);c.recv=false;G.hands[G.retTo].push(c);sel.clear();
+  G.hands[0]=minus(hand,[c]);c.recv=false;G.hands[G.retTo].push(c);sel.clear();G.groups=[];
   setMsg(`我还贡${cardTxt(c)}给${NAMES[G.retTo]}`);G.phase='deal';render();
   later(()=>startPlay(G.leaderAfter),900);
 }
@@ -931,7 +949,7 @@ function humanHint(){
 (function(){
   const el=$('#hand');let drag=null;
   const idAt=(x,y)=>{const e=document.elementFromPoint(x,y);const c=e&&e.closest&&e.closest('#hand .card');return c?+c.dataset.id:null;};
-  const apply=(id,on)=>{sfx('tick');if(on)sel.add(id);else sel.delete(id);const e=el.querySelector(`.card[data-id="${id}"]`);if(e)e.classList.toggle('sel',on);hintList=[];};
+  const apply=(id,on)=>{sfx('tick');if(on)sel.add(id);else sel.delete(id);const e=el.querySelector(`.card[data-id="${id}"]`);if(e)e.classList.toggle('sel',on);hintList=[];updSortBtn();};
   el.addEventListener('pointerdown',e=>{
     e.preventDefault();const id=idAt(e.clientX,e.clientY);
     if(id===null){sel.clear();renderHand();return;}
@@ -953,9 +971,9 @@ const RULES=`<ul>
 <li><b>进贡</b>：从第二局起，末游把最大的牌（红心级牌除外）贡给头游；双下时输方两家都进贡，大的给头游。收贡者还一张10及以下的牌。进贡方持有两张大王可<b>抗贡</b>。进贡者先出牌，抗贡则头游先出。</li>
 <li><b>过A</b>：打A时须拿头游且对家不是末游才算过A获胜；打A三次不过退回打2。</li>
 </ul>
-<p style="color:#777">操作：点按或在手牌上滑动选牌，点空白处取消选择；“提示”可循环推荐出法。进度会自动保存在本机。</p>`;
+<p style="color:#777">操作：点按或在手牌上滑动选牌，点空白处取消选择；“提示”可循环推荐出法。手牌自动从小到大排列（同点数从上到下♠♥♣♦，百搭在最右）；选中几张牌点“理牌”可把它们归成一列放到最左边，不选牌时点“还原”恢复自动排序。进度会自动保存在本机。</p>`;
 
-$('#bPlay').onclick=humanPlay;$('#bPass').onclick=humanPass;$('#bHint').onclick=humanHint;$('#bRet').onclick=humanReturn;
+$('#bSort').onclick=humanSort;$('#bPlay').onclick=humanPlay;$('#bPass').onclick=humanPass;$('#bHint').onclick=humanHint;$('#bRet').onclick=humanReturn;
 const openDiff=()=>modal('电脑难度',`<p><b>普通</b>：按简单经验出牌。</p><p><b>困难</b>：记牌、整体拆牌规划、不乱用大牌和炸弹、配合队友、残局会拦截和算牌。</p><p>当前：<b>${G.diff==='hard'?'困难':'普通'}</b>（立即生效，队友和对手同时切换）</p>`,
   [['困难',()=>{G.diff='hard';saveDiff();renderDiff();}],['普通',()=>{G.diff='normal';saveDiff();renderDiff();},true]]);
 function saveDiff(){try{localStorage.setItem('guandan_diff',G.diff);}catch(e){}}
