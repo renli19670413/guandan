@@ -408,7 +408,7 @@ function planOf(ctx,hand){
 const weakCount=(ctx,pl)=>pl.combos.filter(c=>!c.power&&!isBoss(ctx,c)).length;
 function passedOn(o,cb){return (G.passInfo[o]||[]).some(e=>e.type===cb.type&&e.n===cb.n&&e.key<=cb.key);}
 
-const HP={tempoB:7,tempoW:2,fin1:8,ctrlM:3,ctrlEarly:6,normM:-3,leadBomb:8,cash:30};
+const HP={newEnd:1,balW:8,tempoB:7,tempoW:2,fin1:8,ctrlM:3,ctrlEarly:6,normM:-3,leadBomb:8,cash:30};
 function hardChoose(s){
   const hand=G.hands[s],L=G.level,ctx=mkCtx(s);
   const plays=genPlays(hand,L);
@@ -427,19 +427,33 @@ function hardChoose(s){
   if(!lp){ // ---------- 首出 ----------
     const weak=weakCount(ctx,cur);
     const bossNB=cur.combos.some(c=>!c.power&&isBoss(ctx,c));
+    const ctrlOf=pl=>pl.combos.filter(c=>c.power||isBoss(ctx,c)).length;
     let best=null,bs=-1e9;
     for(const p of plays){
       const cb=p.combo,pr=P(p),boss=isBoss(ctx,cb);
       let sc=pr.v-Math.min(cb.key,17)*0.15+cb.n*0.4;
       if(cb.power)sc-=HP.leadBomb;
       if(weak<=1&&bossNB&&boss&&!cb.power)sc+=HP.cash;          // 只剩一手小牌：先走大牌保持牌权
-      for(const o of opps){const n=oc(o);
+      if(HP.newEnd){
+        // 控制力平衡：每出一手小牌后要靠一手大牌夺回牌权，所以大牌数至少要 = 小牌数-1
+        const deficit=Math.max(0,(weakCount(ctx,pr)-1)-ctrlOf(pr));
+        sc-=deficit*HP.balW;
+        for(const o of opps){const n=oc(o);
+          if(n<=4){
+            if(!boss&&cb.n===n)sc-=25;                          // 别送对手正好走完的牌型
+            else if(!boss&&cb.n<n&&n<=2)sc-=4;
+            if(cb.n>n)sc+=6;                                    // 对手张数不够，跟不上
+            if(boss&&weak<=1)sc+=6;                             // 只有快走完时才先出大牌
+          }
+          if(n<=8&&!boss&&passedOn(o,cb))sc+=8;               // 他刚要不起这种牌
+        }
+      }else for(const o of opps){const n=oc(o);
         if(n<=4){
           if(!boss&&cb.n===n)sc-=25;
           else if(!boss&&cb.n<n&&cb.n<=2)sc-=8;
           if(boss)sc+=6;if(cb.n>n)sc+=6;
         }
-        if(n<=8&&passedOn(o,cb))sc+=8;                       // 他刚要不起这种牌
+        if(n<=8&&passedOn(o,cb))sc+=8;
       }
       if(pAct&&pCnt<=4&&!(team(nxt)!==team(s)&&oc(nxt)<=pCnt)){ // 给队友送牌
         if(cb.n===pCnt||(cb.n===1&&pCnt<=3))sc+=12-Math.min(cb.key,15)*0.7;
