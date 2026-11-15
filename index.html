@@ -16,18 +16,27 @@
 :root{
   --felt:#0b4d33;--felt2:#0e5f40;--ink:#fff;--muted:#bfe3cf;--gold:#ffd54a;
   --us:#3d8bfd;--them:#ef5350;--card:#fff;--cardInk:#111;--red:#d32f2f;--sel:#ffe08a;
+  --gold2:#ffab2e;--brass:#c9962c;--edge:#06301f;--ok:#2fd07a;--danger:#ff5a52;--info:#59c2ff;
+  --panelLine:rgba(255,213,74,.28);--panelInk:#eafff2;--panelDim:#9dc4ae;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:var(--felt);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:radial-gradient(ellipse at 50% 40%,var(--felt2),var(--felt) 70%)}
-#bar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;font-size:13px;background:rgba(0,0,0,.25)}
+#app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background:radial-gradient(ellipse at 50% 34%,rgba(255,255,255,.07),transparent 58%),radial-gradient(ellipse at 50% 44%,var(--felt2) 0%,var(--felt) 60%,var(--edge) 100%),repeating-linear-gradient(45deg,rgba(0,0,0,.045) 0 2px,transparent 2px 5px)}
+#bar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;font-size:13px;background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.18));border-bottom:1px solid rgba(255,213,74,.22);box-shadow:0 2px 10px rgba(0,0,0,.22)}
 #bar b{color:var(--gold);font-size:15px}
+#lv{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bar>div:last-child{flex:0 0 auto;white-space:nowrap}
 #lv .us{color:#9cc4ff}#lv .them{color:#ff9c9a}
-#bar button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:6px;padding:5px 9px;font-size:13px}
+#lv .afail{color:#ff9c9a;font-size:11px;margin-left:4px}
+#bar button{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.09));color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 9px;font-size:13px;transition:transform .12s,filter .15s}
+#bar button:active{transform:scale(.92)}
+#bar button:disabled{opacity:.32}
+#bar button.on{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#4a3200;border-color:var(--gold);font-weight:700}
 #msg{min-height:20px;text-align:center;font-size:12px;color:var(--muted);padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#table{flex:0 0 auto;display:flex;flex-direction:column;padding:0 6px}
+#table{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-between;padding:0 6px;min-height:0}
 .seatTop{display:flex;flex-direction:column;align-items:center;gap:2px}
-.mid{display:grid;grid-template-columns:62px 1fr 1fr 62px;align-items:center;min-height:96px}
+.mid{display:grid;grid-template-columns:62px 1fr 1fr 62px;align-items:center;min-height:96px;flex:1 1 auto}
 .info{display:flex;flex-direction:column;align-items:center;font-size:11px;gap:1px;position:relative}
 .seatTop .info{flex-direction:row;gap:6px}
 .avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;border:2px solid rgba(255,255,255,.5)}
@@ -36,42 +45,48 @@ html,body{height:100%;overflow:hidden;background:var(--felt);color:var(--ink);fo
 @keyframes pulse{to{box-shadow:0 0 0 6px rgba(255,213,74,.35)}}
 .cnt{background:rgba(0,0,0,.35);border-radius:9px;padding:1px 7px;font-size:12px}
 .cnt.low{background:#c62828}
+.cnt.warn{background:linear-gradient(180deg,#ff6b5e,#c62828);font-weight:700;animation:warnPulse .9s infinite alternate}
+@keyframes warnPulse{to{box-shadow:0 0 0 4px rgba(255,90,82,.32)}}
+#me .warn{color:#ff9c9a;font-weight:700}
 .badge{background:var(--gold);color:#5a3b00;border-radius:4px;padding:0 4px;font-size:11px;font-weight:700}
 .played{isolation:isolate;display:flex;align-items:center;min-height:50px;position:relative}
 .seatTop .played{justify-content:center}
 .pl3{justify-content:flex-start}.pl1{justify-content:flex-end}
 #myPlayed{justify-content:center;min-height:56px}
 .pass{color:var(--muted);font-size:15px;font-weight:600}
-.ctag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:11px;background:rgba(0,0,0,.45);padding:0 6px;border-radius:8px;white-space:nowrap;color:var(--gold)}
+.ctag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:11px;background:rgba(0,0,0,.5);padding:0 6px;border-radius:8px;white-space:nowrap;color:var(--gold);border:1px solid rgba(255,213,74,.2)}
+.ctag.target{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#4a3200;font-weight:700;border-color:#fff3c4;box-shadow:0 2px 8px rgba(255,171,46,.45)}
 .mini{position:relative;height:46px;font-size:32px}
 .mini .card{box-shadow:-1px 0 2px rgba(0,0,0,.25)}
 #actions{display:flex;align-items:center;gap:8px;padding:4px 10px;min-height:46px}
-#me{font-size:12px;color:var(--muted);flex:1;display:flex;align-items:center;gap:6px}
+#me{font-size:12px;color:var(--muted);flex:0 0 auto;white-space:nowrap;display:flex;align-items:center;gap:6px}
 #me .avatar{width:30px;height:30px;font-size:12px}
 #me.turn .avatar{box-shadow:0 0 0 3px var(--gold)}
-.btn{border:0;border-radius:20px;padding:9px 12px;font-size:15px;font-weight:600;color:#fff;min-width:54px}
+.btn{border:0;border-radius:20px;padding:9px 12px;font-size:15px;font-weight:600;color:#fff;min-width:54px;box-shadow:0 2px 0 rgba(0,0,0,.28),0 4px 12px rgba(0,0,0,.2);transition:transform .1s,filter .15s}
 .btn:disabled{opacity:.35}
-#bSort{background:#26a69a}#bHint{background:#5c6bc0}#bPass{background:#78909c}#bPlay{background:#ff8f00}#bRet{background:#8e24aa}
-#hand{flex:1 1 auto;position:relative;z-index:0;isolation:isolate;min-height:170px;touch-action:none;overflow:hidden}
-.card{position:absolute;background:var(--card);color:var(--cardInk);border-radius:.12em;border:1px solid #9a9a9a;box-shadow:-2px 0 3px rgba(0,0,0,.22)}
+.btn:not(:disabled):active{transform:translateY(2px);box-shadow:0 0 0 rgba(0,0,0,.3)}
+.btn:not(:disabled):hover{filter:brightness(1.09)}
+#bSort{background:linear-gradient(180deg,#2ec4b6,#1c8880)}#bHint{background:linear-gradient(180deg,#7986cb,#4a58ad)}#bPass{background:linear-gradient(180deg,#90a4ae,#647f8c)}#bPlay{background:linear-gradient(180deg,#ffc046,#f57c00);color:#3a2400}#bRet{background:linear-gradient(180deg,#ab47bc,#7b1fa2)}
+#hand{flex:0 0 auto;position:relative;z-index:0;isolation:isolate;height:clamp(190px,34vh,300px);touch-action:none;overflow:hidden}
+.card{position:absolute;background:linear-gradient(160deg,#fff 0%,#f5f7f5 60%,#e7ece8 100%);color:var(--cardInk);border-radius:.12em;border:1px solid #8e9a90;box-shadow:-2px 0 3px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.9)}
 .card.red{color:var(--red)}
 .card .cor{position:absolute;left:.04em;top:.03em;width:.44em;text-align:center;line-height:.95}
 .card .cor b{display:block;font-size:.4em;font-weight:700;letter-spacing:-.06em}
 .card .cor i{display:block;font-style:normal;font-size:.33em}
 .card .big{position:absolute;right:.06em;bottom:.02em;font-size:.6em;line-height:1}
-.card.wild{background:#fff5cc;border-color:#d4a300}
+.card.wild{background:linear-gradient(160deg,#fffbe6,#ffe9a8);border-color:#d4a300;box-shadow:-2px 0 3px rgba(0,0,0,.22),0 0 8px rgba(255,193,7,.4)}
 .card.wild .star{position:absolute;left:.06em;bottom:.04em;font-size:.26em;color:#c79100;font-weight:700}
 .card.joker .cor b,.card.joker .cor i{font-size:.34em}
 .card.recv{border:2px solid #ab47bc}
-.card.sel{background:var(--sel);transform:translateY(-6px)}
-.card.wild.sel{background:#ffd36b}
+.card.sel{background:linear-gradient(160deg,#fff6cf,var(--sel));transform:translateY(-6px);box-shadow:0 0 0 2px var(--gold),0 6px 14px rgba(0,0,0,.32)}
+.card.wild.sel{background:linear-gradient(160deg,#ffe9a8,#ffd36b)}
 /* ---- 横屏布局 ---- */
 #app.rot{position:fixed;top:0;left:100vw;width:100vh;width:100dvh;height:100vw;transform-origin:top left;transform:rotate(90deg)}
 #app.rotL{position:fixed;top:100vh;top:100dvh;left:0;width:100vh;width:100dvh;height:100vw;transform-origin:top left;transform:rotate(-90deg)}
 body.land #app{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) minmax(150px,47%);grid-template-areas:"bar bar" "table table" "hand actions"}
 body.land #bar{grid-area:bar;padding:4px 10px}
 body.land #msg{grid-area:bar;justify-self:center;align-self:center;max-width:36%;pointer-events:none;min-height:0}
-body.land #table{grid-area:table;display:grid;grid-template-columns:70px 1fr 1.3fr 1fr 70px;grid-template-rows:auto minmax(0,1fr) auto;
+body.land #table{grid-area:table;display:grid;grid-template-columns:70px 1fr 1.3fr 1fr 70px;grid-template-rows:auto minmax(0,1fr) auto;justify-content:stretch;
   grid-template-areas:"i3 p3 i2 p1 i1" "i3 p3 p2 p1 i1" "i3 p3 me p1 i1";align-items:center;min-height:0;padding:0 8px}
 body.land .seatTop,body.land .mid{display:contents}
 body.land #info2{grid-area:i2;justify-self:center}
@@ -79,7 +94,7 @@ body.land #pl2{grid-area:p2;justify-content:center}
 body.land #info3{grid-area:i3}body.land #pl3{grid-area:p3}
 body.land #pl1{grid-area:p1}body.land #info1{grid-area:i1}
 body.land #myPlayed{grid-area:me;min-height:50px}
-body.land #hand{grid-area:hand;min-height:0}
+body.land #hand{grid-area:hand;min-height:0;height:auto}
 body.land #actions{grid-area:actions;flex-direction:column;justify-content:center;align-items:stretch;padding:4px 12px 8px 4px;gap:7px;min-height:0}
 body.land #me{flex:0 0 auto;justify-content:center}
 body.land .btn{padding:6px 16px}
@@ -116,11 +131,93 @@ body.land .res table{margin:0}
 #modal .mbtns button{border:0;border-radius:20px;padding:10px 20px;font-size:15px;font-weight:600;background:#0e7a4f;color:#fff}
 #modal .mbtns button.alt{background:#90a4ae}
 .up{color:#0e7a4f;font-weight:700}.down{color:#c62828;font-weight:700}
+/* ---- 记牌器 / 出牌记录 面板 ---- */
+#panel{position:absolute;z-index:26;right:6px;top:42px;width:min(304px,88%);max-height:calc(100% - 252px);display:none;flex-direction:column;color:var(--panelInk);
+  background:linear-gradient(180deg,rgba(9,54,35,.96),rgba(5,32,21,.97));border:1px solid var(--panelLine);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.5);overflow:hidden}
+#panel.show{display:flex;animation:panelIn .18s ease-out}
+@keyframes panelIn{from{opacity:0;transform:translateY(-10px)}}
+#panel .phead{display:flex;align-items:center;gap:5px;padding:6px 7px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.24)}
+#panel .phead button{flex:1;border:1px solid transparent;background:rgba(255,255,255,.08);color:#cfeedd;border-radius:8px;padding:5px 4px;font-size:13px;transition:filter .15s}
+#panel .phead button.on{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#4a3200;font-weight:700}
+#panel .phead .pclose{flex:0 0 auto;width:28px;font-size:14px;line-height:1.1}
+#panel .pbody{overflow:auto;padding:8px;font-size:12px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.plegend{color:var(--panelDim);font-size:11px;line-height:1.5;margin:0 0 6px}
+.plegend b{color:var(--gold)}
+.plegend+.plegend,.cgrid+.plegend{margin-top:7px;margin-bottom:0}
+.cside{margin-top:7px}
+.cside .plegend{margin:0}
+.cside .pseat+.plegend{margin-top:7px}
+.cgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.ccell{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:3px 1px;text-align:center;line-height:1.22}
+.ccell .r{font-size:12px;font-weight:700;color:#fff;white-space:nowrap}
+.ccell .r .dot{font-size:9px;color:#4a3200;background:var(--gold);border-radius:3px;padding:0 2px;margin-left:2px;vertical-align:1px}
+.ccell .left{font-size:17px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.ccell .sub{font-size:10px;color:var(--panelDim);white-space:nowrap}
+.ccell.lv{border-color:var(--gold);background:rgba(255,213,74,.14)}
+.ccell.jk .r{color:#ffd54a}.ccell.jk.big .r{color:#ff8a80}
+.ccell.zero{opacity:.42}.ccell.zero .left{color:var(--panelDim)}
+.pseat{display:flex;justify-content:space-between;gap:6px;margin-top:8px;padding:6px 8px;background:rgba(0,0,0,.24);border-radius:9px;font-size:12px}
+.pseat .us{color:#9cc4ff}.pseat .them{color:#ff9c9a}.pseat b{color:#fff}
+.logrow{display:flex;gap:6px;align-items:baseline;padding:3px 6px;border-radius:7px;font-size:12px;line-height:1.45}
+.logrow:nth-child(even){background:rgba(255,255,255,.05)}
+.logrow .who{flex:0 0 34px;font-weight:700}
+.logrow .who.us{color:#9cc4ff}.logrow .who.them{color:#ff9c9a}
+.logrow .cb{flex:0 0 auto;color:var(--gold);font-size:11px;white-space:nowrap}
+.logrow .cs{color:#dff3e7;word-break:break-all}
+.logrow.pass .cs{color:#8fb6a1}
+.logrow.bomb{background:rgba(255,90,82,.18);box-shadow:inset 0 0 0 1px rgba(255,90,82,.3)}
+.logsep{margin:6px 0 3px;font-size:11px;color:var(--gold);border-top:1px dashed rgba(255,213,74,.28);padding-top:5px;text-align:center}
+/* ---- 选牌实时牌型 ---- */
+#myPlayed .selinfo{display:inline-flex;align-items:center;gap:7px;max-width:96%;background:rgba(4,32,20,.8);border:1px solid var(--panelLine);border-radius:999px;padding:5px 14px;font-size:13px;color:var(--panelInk);animation:pop .18s ease-out}
+#myPlayed .selinfo b{color:var(--gold);white-space:nowrap}
+#myPlayed .selinfo .n{opacity:.72;font-size:12px}
+#myPlayed .selinfo.ok{border-color:rgba(47,208,122,.6);box-shadow:0 0 12px rgba(47,208,122,.18)}
+#myPlayed .selinfo.bad{border-color:rgba(255,90,82,.62);color:#ffd9d6}
+#myPlayed .selinfo.bad b{color:#ff9c9a}
+/* ---- 炸弹火花 ---- */
+#fx{position:absolute;inset:0;pointer-events:none;z-index:29;overflow:hidden}
+.spark{position:absolute;border-radius:50%;will-change:transform,opacity}
+/* ---- 滚动条用牌桌配色 ---- */
+#panel .pbody{scrollbar-width:thin;scrollbar-color:var(--brass) rgba(0,0,0,.3)}
+#panel .pbody::-webkit-scrollbar{width:8px}
+#panel .pbody::-webkit-scrollbar-track{background:rgba(0,0,0,.3);border-radius:8px}
+#panel .pbody::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gold),var(--brass));border-radius:8px}
+#panel .pbody::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+#modal .box{scrollbar-width:thin;scrollbar-color:#0e7a4f #e6efe9}
+#modal .box::-webkit-scrollbar{width:9px}
+#modal .box::-webkit-scrollbar-track{background:#e6efe9;border-radius:9px}
+#modal .box::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#129463,#0b4d33);border-radius:9px}
+#modal .box::-webkit-scrollbar-thumb:hover{background:#129463}
+#modal .mbtns button{transition:transform .1s,filter .15s}
+#modal .mbtns button:active{transform:scale(.95)}
+.avatar{background-image:linear-gradient(160deg,rgba(255,255,255,.32),rgba(0,0,0,.2));box-shadow:0 2px 6px rgba(0,0,0,.3)}
+/* ---- 横屏面板：只盖住牌桌中区，不挡手牌和按钮 ---- */
+body.land #panel{left:50%;right:auto;transform:translateX(-50%);top:32px;width:min(470px,66%);max-height:calc(54% - 34px)}
+body.land #panel.show{animation:panelInL .18s ease-out}
+@keyframes panelInL{from{opacity:0;transform:translateX(-50%) translateY(-10px)}}
+body.land #panel .pbody{padding:6px}
+body.land #panel .plegend .long{display:none}
+body.land .cwrap{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:8px;align-items:start}
+body.land .cgrid{grid-template-columns:repeat(8,minmax(0,1fr));gap:3px}
+body.land .ccell{padding:2px 1px;line-height:1.16}
+body.land .ccell .r{font-size:11px}
+body.land .ccell .left{font-size:14px}
+body.land .ccell .sub{font-size:9px}
+body.land .cside{margin-top:0}
+body.land .cside .plegend{margin:0 0 4px}
+body.land .plegend{margin-bottom:4px}
+body.land .pseat{flex-direction:column;gap:1px;margin:0 0 4px;padding:4px 7px}
+/* ---- 窄屏（≤380px）压缩顶栏和操作区，保证不挤不折行 ---- */
+@media (max-width:380px){
+  #bar{padding:5px 6px;font-size:12px;gap:4px}#bar b{font-size:13px}#lv{font-size:11px}#bar button{padding:4px 6px;font-size:12px}
+  #actions{gap:6px;padding:4px 6px}.btn{min-width:46px;padding:8px 8px;font-size:14px}
+  #me{font-size:11px;gap:4px}#me .avatar{width:26px;height:26px;font-size:11px}
+}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="bar"><div id="lv"></div><div><button id="bRot">横屏</button> <button id="bSnd" aria-label="声音"></button> <button id="bMenu">菜单</button></div></div>
+  <div id="bar"><div id="lv"></div><div><button id="bUndo" title="悔牌 (Z)" aria-label="悔牌">悔牌</button> <button id="bCount" title="记牌器 (C) / 出牌记录 (L)" aria-label="记牌器">记牌</button> <button id="bRot">横屏</button> <button id="bSnd" aria-label="声音"></button> <button id="bMenu">菜单</button></div></div>
   <div id="msg"></div>
   <div id="table">
     <div class="seatTop"><div class="info" id="info2"></div><div class="played" id="pl2"></div></div>
@@ -141,6 +238,8 @@ body.land .res table{margin:0}
     <button class="btn" id="bRet">还贡</button>
   </div>
   <div id="hand"></div>
+<div id="panel"><div class="phead"><button id="tabCount">记牌器</button><button id="tabLog">出牌记录</button><button class="pclose" id="pClose" aria-label="关闭">✕</button></div><div class="pbody" id="pBody"></div></div>
+<div id="fx"></div>
 <div id="toast"></div>
 <div id="flash"></div>
 <div id="modal"><div class="box"><h2 id="mTitle"></h2><div class="body" id="mBody"></div><div class="mbtns" id="mBtns"></div></div></div>
@@ -161,8 +260,9 @@ const SAVE_KEY='guandan_save_v1';
 const $=s=>document.querySelector(s);
 
 let G={levels:[2,2],declarer:null,aFails:[0,0],prevFinish:null,round:0,token:0,
-  diff:'hard',played:[],passInfo:[[],[],[],[]],level:2,hands:[[],[],[],[]],finish:[],turn:0,lastPlay:null,passed:new Set(),disp:[null,null,null,null],phase:'idle',wait:false};
+  diff:'hard',seatDiffMode:'all-hard',played:[],passInfo:[[],[],[],[]],level:2,hands:[[],[],[],[]],finish:[],turn:0,lastPlay:null,passed:new Set(),disp:[null,null,null,null],phase:'idle',wait:false,log:[]};
 let sel=new Set(), hintList=[], hintIdx=0;
+let undoStack=[], undoHold=false, panelTab='count';
 
 const V=(r,L)=>r===16?17:r===15?16:r===L?15:r;      // 牌力值：级牌在A之上、王之下
 const isW=(c,L)=>c.rank===L&&c.suit==='H';           // 逢人配：红心级牌
@@ -178,6 +278,15 @@ function comboName(cb){
   if(cb.type==='bomb')return cb.n+'炸';
   return TYPE_TXT[cb.type];
 }
+// 带点数/范围的完整描述，用于选牌提示、牌型选择、出牌记录
+function comboDesc(cb,L){
+  const seqLen={straight:5,sflush:5,tube:3,plate:2}[cb.type];
+  if(seqLen){const a=cb.key===1?'A':RT[cb.key],b=RT[cb.key+seqLen-1];return comboName(cb)+' '+a+'-'+b;}
+  if(cb.type==='jokerbomb')return '天王炸';
+  if(cb.type==='bomb')return cb.n+'炸 '+keyName(cb.key,L);
+  return comboName(cb)+' '+keyName(cb.key,L);
+}
+function logPush(e){G.log.push(e);if(G.log.length>400)G.log.shift();}
 
 /* ================= 牌型识别 ================= */
 // 在窗口内连续的起点（1 表示 A 作 1 用）
@@ -362,7 +471,13 @@ function mkCtx(s){
   const L=G.level,mine=new Set(G.hands[s].map(c=>c.id)),played=new Set(G.played.map(c=>c.id));
   const pool=FULL_DECK.filter(c=>!mine.has(c.id)&&!played.has(c.id));
   const maxKey={};
-  for(const p of genPlays(pool,L)){const cb=p.combo;if(cb.power)continue;const k=cb.type+cb.n;if(!(k in maxKey)||cb.key>maxKey[k])maxKey[k]=cb.key;}
+  for(const p of genPlays(pool,L)){const cb=p.combo;
+    if(cb.power){
+      // 外面的同花顺同样能当顺子压人，别把它漏掉，否则会误判自己的顺子是大牌
+      if(cb.type==='sflush'){const k='straight5';if(!(k in maxKey)||cb.key>maxKey[k])maxKey[k]=cb.key;}
+      continue;
+    }
+    const k=cb.type+cb.n;if(!(k in maxKey)||cb.key>maxKey[k])maxKey[k]=cb.key;}
   return {s,L,maxKey,memo:new Map()};
 }
 // 外面没有同牌型更大的（不算炸弹）= 大牌/控制
@@ -516,6 +631,16 @@ function hardReturnCard(s){
 const diffOf=s=>(G.seatDiff&&G.seatDiff[s])||G.diff;
 const aiPick=s=>diffOf(s)==='hard'?hardChoose(s):aiChoose(s);
 const aiReturn=s=>diffOf(s)==='hard'?hardReturnCard(s):aiReturnCard(s);
+// 分队难度：可让队友弱一点、对手强一点（或反过来）
+const SEATDIFF={
+  'all-hard':{name:'全部困难',diff:'hard',seats:null},
+  'all-normal':{name:'全部普通',diff:'normal',seats:null},
+  'mixed':{name:'对手困难·队友普通',diff:'hard',seats:['hard','hard','normal','hard']},
+  'easy-opp':{name:'对手普通·队友困难',diff:'hard',seats:['hard','normal','hard','normal']}
+};
+function applySeatDiff(mode){const c=SEATDIFF[mode]||SEATDIFF['all-hard'];G.seatDiffMode=SEATDIFF[mode]?mode:'all-hard';G.diff=c.diff;G.seatDiff=c.seats?c.seats.slice():null;}
+function setSeatDiff(mode){applySeatDiff(mode);try{localStorage.setItem('guandan_seatdiff',G.seatDiffMode);}catch(e){}saveDiff();renderDiff();toast('难度：'+SEATDIFF[G.seatDiffMode].name,1200);}
+const seatDiffName=()=>SEATDIFF[G.seatDiffMode]?SEATDIFF[G.seatDiffMode].name:(G.diff==='hard'?'全部困难':'全部普通');
 
 /* ================= 音效 / 语音 / 动画 ================= */
 const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -590,9 +715,30 @@ function shake(big){
   const f=$('#flash');f.style.background=big?'var(--gold)':'var(--ink)';
   f.animate([{opacity:big?0.75:0.55},{opacity:0}],{duration:big?600:350,easing:'ease-out'});
 }
+// 炸弹火花：纯 DOM + WAAPI，动画结束即移除，不留常驻循环
+function burst(big){
+  if(RM||AUTO)return;
+  const fx=$('#fx');if(fx.childElementCount>90)return;
+  const W=fx.clientWidth,H=fx.clientHeight,n=big?28:16;
+  const cols=big?['#ffd54a','#ffab2e','#ff5a52','#ffffff']:['#ffd54a','#ffffff','#7fe3b0'];
+  for(let i=0;i<n;i++){
+    const e=document.createElement('i');e.className='spark';
+    const sz=(big?6:4)+Math.random()*(big?9:6),col=cols[i%cols.length];
+    e.style.cssText=`left:${W/2-sz/2}px;top:${H*0.42-sz/2}px;width:${sz}px;height:${sz}px;background:${col};box-shadow:0 0 ${sz*1.4}px ${col}`;
+    fx.appendChild(e);
+    const a=Math.random()*Math.PI*2,d=(big?80:55)+Math.random()*(big?210:130);
+    const dx=Math.cos(a)*d,dy=Math.sin(a)*d;
+    const an=e.animate([
+      {transform:'translate(0,0) scale(1)',opacity:1},
+      {transform:`translate(${dx*0.7}px,${dy*0.7-18}px) scale(.85)`,opacity:.95,offset:.55},
+      {transform:`translate(${dx}px,${dy+34}px) scale(.2)`,opacity:0}
+    ],{duration:(big?760:540)+Math.random()*180,easing:'cubic-bezier(.15,.7,.3,1)'});
+    an.onfinish=()=>e.remove();an.oncancel=()=>e.remove();
+  }
+}
 // 出的牌从出牌人位置（自己则从手牌原位）飞到桌面
 function flyIn(el,s){
-  if(RM||AUTO)return;
+  if(RM||AUTO||G.noFly)return;
   let from=null;
   if(s!==0){const a=$('#info'+s+' .avatar').getBoundingClientRect();from={x:a.left+a.width/2,y:a.top+a.height/2};}
   el.querySelectorAll('.card').forEach((m,i)=>{
@@ -685,12 +831,15 @@ function miniHTML(cards,L){
 }
 function renderPlayed(s){
   const el=s===0?$('#myPlayed'):$('#pl'+s);const d=G.disp[s];
-  if(el._d===d)return;el._d=d;
+  const tgt=!!(d&&d!=='pass'&&G.phase==='play'&&G.lastPlay&&G.lastPlay.seat===s);
+  const changed=el._d!==d;
+  if(!changed&&el._t===tgt)return;
+  el._d=d;el._t=tgt;
   if(!d){el.innerHTML='';return;}
   if(d==='pass'){el.innerHTML='<span class="pass">不出</span>';return;}
   const big=d.combo.power?'💥':'';
-  el.innerHTML=(d.combo.n>=5||d.combo.power?`<span class="ctag">${big}${comboName(d.combo)}</span>`:'')+miniHTML(d.cards,G.level);
-  flyIn(el,s);
+  el.innerHTML=`<span class="ctag${tgt?' target':''}">${big}${comboDesc(d.combo,G.level)}</span>`+miniHTML(d.cards,G.level);
+  if(changed)flyIn(el,s);
 }
 function renderSeats(){
   for(const s of [1,2,3]){
@@ -698,19 +847,24 @@ function renderSeats(){
     const el=$('#info'+s);
     el.className='info'+(G.phase==='play'&&G.turn===s&&!G.wait?' turn':'');
     el.innerHTML=`<div class="avatar ${team(s)===0?'us':'them'}">${NAMES[s]}</div>`+
-      (fi>=0?`<span class="badge">${FIN_TXT[fi]}</span>`:`<span class="cnt${n<=10?' low':''}">${n}张</span>`);
+      (fi>=0?`<span class="badge">${FIN_TXT[fi]}</span>`:`<span class="cnt${n<=2?' warn':n<=10?' low':''}">${n}张</span>`);
   }
   const fi=G.finish.indexOf(0);
   const me=$('#me');me.className=(G.phase==='play'&&G.turn===0&&!G.wait)?'turn':'';
-  me.innerHTML=`<div class="avatar us">我</div>`+(fi>=0?`<span class="badge">${FIN_TXT[fi]}</span>`:`<span>${G.hands[0].length}张</span>`);
+  const mn=G.hands[0].length;
+  me.innerHTML=`<div class="avatar us">我</div>`+(fi>=0?`<span class="badge">${FIN_TXT[fi]}</span>`:`<span class="${mn<=2?'warn':''}">${mn}张</span>`);
   for(let s=0;s<4;s++)renderPlayed(s);
 }
 function renderBar(){
   const L=G.level,d=G.declarer;
-  const who=d===null?'':(d===0?'（我方）':'（对方）');
+  const over=G.phase==='over'&&d!==null;
+  const shown=over?G.levels[d]:L;
+  const cls=d===0?'us':d===1?'them':'';
   let a='';
-  if(d!==null&&G.levels[d]===14&&L===14&&G.aFails[d])a=` 打A失败${G.aFails[d]}次`;
-  $('#lv').innerHTML=`<span class="us">我方 <b>${RT[G.levels[0]]}</b></span> · <span class="them">对方 <b>${RT[G.levels[1]]}</b></span> · ${G.phase==='over'?'下局打<b>'+RT[G.levels[d]]+'</b>':'本局打<b>'+RT[L]+'</b>'}${who}${a}`;
+  if(d!==null&&G.levels[d]===14&&L===14&&G.aFails[d])a=`<span class="afail">A✗${G.aFails[d]}</span>`;
+  const el=$('#lv');
+  el.innerHTML=`<span class="us">我方<b>${RT[G.levels[0]]}</b></span>·<span class="them">对方<b>${RT[G.levels[1]]}</b></span>·<span class="${cls}">${over?'下局打':'打'}<b>${RT[shown]}</b></span>${a}`;
+  el.title=`我方 ${RT[G.levels[0]]} · 对方 ${RT[G.levels[1]]} · ${over?'下一局':'本局'}打 ${RT[shown]}${d===null?'':d===0?'（我方坐庄）':'（对方坐庄）'}`;
 }
 function renderHand(){
   const el=$('#hand');const W=el.clientWidth,H=el.clientHeight,L=G.level;
@@ -761,7 +915,7 @@ function humanSort(){
   if(sel.size){
     const ids=[...sel];
     G.groups=(G.groups||[]).map(g=>g.filter(id=>!sel.has(id))).filter(g=>g.length);
-    G.groups.push(ids);sel.clear();hintList=[];sfx('deal');renderHand();
+    G.groups.push(ids);sel.clear();hintList=[];sfx('deal');renderHand();renderSelInfo();
   }else if(G.groups&&G.groups.length){G.groups=[];sfx('deal');renderHand();toast('已恢复自动排序',900);}
   else toast('先选中要放在一起的牌，再点“理牌”',1600);
 }
@@ -772,14 +926,87 @@ function renderActions(){
   $('#bRet').style.display=ret?'':'none';
   $('#bSort').disabled=!G.hands[0].length;
   $('#bHint').disabled=!my;$('#bPlay').disabled=!my;$('#bPass').disabled=!my||!G.lastPlay;
+  $('#bUndo').disabled=AUTO||!undoStack.length||G.phase!=='play';
+}
+// 选中牌后即时显示牌型 / 能否压过，位置就在自己出牌区（此时是空的）
+function renderSelInfo(){
+  const el=$('#myPlayed');
+  let info=null;
+  if(G.phase==='play'&&G.turn===0&&!G.wait&&!AUTO&&sel.size){
+    const cs=selectedCards(),its=analyze(cs,G.level),n=cs.length;
+    if(!its.length)info={cls:'bad',html:`<span class="n">${n}张</span><b>牌型不合法</b>`};
+    else if(G.lastPlay){
+      const ok=its.filter(c=>beats(c,G.lastPlay.combo));
+      info=ok.length?{cls:'ok',html:`<span class="n">${n}张</span><b>${comboDesc(ok[0],G.level)}</b><span class="n">可压过</span>`}
+                    :{cls:'bad',html:`<span class="n">${n}张</span><b>${comboDesc(its[0],G.level)}</b><span class="n">管不上</span>`};
+    }else{
+      const names=[...new Set(its.map(c=>comboDesc(c,G.level)))];
+      info={cls:'ok',html:`<span class="n">${n}张</span><b>${names.join(' / ')}</b>`};
+    }
+  }
+  if(info){el._d='__sel';el.innerHTML=`<div class="selinfo ${info.cls}">${info.html}</div>`;}
+  else if(el._d==='__sel'){el._d=null;el.innerHTML='';}
+}
+/* ---- 记牌器 / 出牌记录 ---- */
+function togglePanel(force,tab){
+  const p=$('#panel');
+  const show=force===undefined?!p.classList.contains('show'):!!force;
+  if(tab)panelTab=tab;
+  p.classList.toggle('show',show);
+  $('#bCount').classList.toggle('on',show);
+  if(show)renderPanel();
+}
+function counterHTML(){
+  const L=G.level,tot=r=>r>=15?2:8;
+  const out={},mine={};for(let r=2;r<=16;r++){out[r]=0;mine[r]=0;}
+  for(const c of G.played)out[c.rank]++;
+  for(const c of G.hands[0])mine[c.rank]++;
+  const wOut=G.played.filter(c=>isW(c,L)).length,wMine=G.hands[0].filter(c=>isW(c,L)).length;
+  let h=`<div class="plegend">大数字＝<b>别人手里</b>还有几张；小字＝<b>我有/已出</b>。<span class="long">已出 ${G.played.length} 张，我手上 ${G.hands[0].length} 张。</span></div><div class="cwrap"><div class="cgrid">`;
+  for(let r=2;r<=16;r++){
+    const left=tot(r)-out[r]-mine[r];
+    const cls='ccell'+(r===L?' lv':'')+(left<=0?' zero':'')+(r>=15?' jk':'')+(r===16?' big':'');
+    const label=r>=15?(r===16?'大王':'小王'):RT[r];
+    h+=`<div class="${cls}"><div class="r">${label}${r===L?'<span class="dot">级</span>':''}</div><div class="left">${left}</div><div class="sub">${mine[r]}/${out[r]}</div></div>`;
+  }
+  h+='</div><div class="cside">';
+  h+=`<div class="plegend">逢人配 ♥${RT[L]} 别人手里还有 <b>${2-wOut-wMine}</b> 张</div>`;
+  h+='<div class="pseat">'+[1,2,3].map(s=>{const fi=G.finish.indexOf(s);return `<span class="${team(s)===0?'us':'them'}">${NAMES[s]} <b>${fi>=0?FIN_TXT[fi]:G.hands[s].length+'张'}</b></span>`;}).join('')+'</div>';
+  let nb=0,ns=0,nj=0;
+  for(const e of G.log){if(e.k!=='play'||!e.combo.power)continue;if(e.combo.type==='jokerbomb')nj++;else if(e.combo.type==='sflush')ns++;else nb++;}
+  h+=`<div class="plegend">本局已出：炸弹 <b>${nb}</b> · 同花顺 <b>${ns}</b> · 天王炸 <b>${nj}</b></div>`;
+  return h+'</div></div>';
+}
+function logHTML(){
+  if(!G.log.length)return '<div class="plegend">本局还没有出牌记录。开局后每一手都会记在这里。</div>';
+  let h='';
+  for(const e of G.log){
+    if(e.k==='sep'){h+=`<div class="logsep">${e.txt}</div>`;continue;}
+    const who=`<span class="who ${team(e.s)===0?'us':'them'}">${NAMES[e.s]}</span>`;
+    if(e.k==='pass'){h+=`<div class="logrow pass">${who}<span class="cs">不出</span></div>`;continue;}
+    h+=`<div class="logrow${e.combo.power?' bomb':''}">${who}<span class="cb">${comboName(e.combo)}</span><span class="cs">${sortForShow(e.cards,G.level).map(cardTxt).join(' ')}</span></div>`;
+  }
+  return h;
+}
+function renderPanel(){
+  if(!$('#panel').classList.contains('show'))return;
+  $('#tabCount').classList.toggle('on',panelTab==='count');
+  $('#tabLog').classList.toggle('on',panelTab==='log');
+  const b=$('#pBody');
+  const stick=b.scrollHeight-b.scrollTop-b.clientHeight<28;
+  const top=b.scrollTop;
+  b.innerHTML=panelTab==='count'?counterHTML():logHTML();
+  b.scrollTop=panelTab==='log'&&stick?b.scrollHeight:top;
 }
 const SND_TXT={all:'🔊',sfx:'🔉',off:'🔇'};
 function renderDiff(){$('#bSnd').textContent=SND_TXT[SND.mode];}
-function render(){renderDiff();renderBar();renderSeats();renderHand();renderActions();}
+function render(){renderDiff();renderBar();renderSeats();renderHand();renderActions();renderSelInfo();renderPanel();}
 function setMsg(t){$('#msg').textContent=t;}
 let toastT=0;
-function toast(t,ms=1600){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),ms);}
+function toast(t,ms=1600){const el=$('#toast');if($('#modal').classList.contains('show'))return;el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),ms);}
+function hideToast(){clearTimeout(toastT);$('#toast').classList.remove('show');}
 function modal(title,body,btns){
+  hideToast();
   $('#mTitle').textContent=title;$('#mBody').innerHTML=body;
   const b=$('#mBtns');b.innerHTML='';
   for(const [txt,fn,alt] of btns){const e=document.createElement('button');e.textContent=txt;if(alt)e.className='alt';
@@ -799,6 +1026,8 @@ function startRound(){
   for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
   G.hands=[0,1,2,3].map(s=>deck.slice(s*27,s*27+27));
   G.dealAnim=true;G.groups=[];G.finish=[];G.played=[];G.passInfo=[[],[],[],[]];G.disp=[null,null,null,null];G.lastPlay=null;G.passed=new Set();G.phase='deal';G.wait=false;sel.clear();
+  G.log=[];undoStack=[];undoHold=false;hintList=[];hintIdx=0;
+  for(let s=0;s<4;s++){const el=s===0?$('#myPlayed'):$('#pl'+s);el._d=undefined;}
   render();
   if(G.prevFinish){later(runTribute,1300);}
   else{const l=Math.floor(Math.random()*4);setMsg(`第${G.round}局 · 随机由【${NAMES[l]}】先出`);later(()=>startPlay(l),1300);}
@@ -809,13 +1038,13 @@ function runTribute(){
   let pairs,leader;
   if(dbl){
     const a=f[2],b=f[3];
-    if(bigJ(a)+bigJ(b)>=2){setMsg(`${NAMES[a]}、${NAMES[b]}共持两张大王，抗贡！由${NAMES[first]}先出`);toast('抗贡！');later(()=>startPlay(first),1800);return;}
+    if(bigJ(a)+bigJ(b)>=2){logPush({k:'sep',txt:`${NAMES[a]}、${NAMES[b]}抗贡`});setMsg(`${NAMES[a]}、${NAMES[b]}共持两张大王，抗贡！由${NAMES[first]}先出`);toast('抗贡！');later(()=>startPlay(first),1800);return;}
     const ca=topCard(a),cb=topCard(b),va=cval(ca,G.level),vb=cval(cb,G.level);
     const toFirst=va>vb?a:vb>va?b:(first+1)%4;const other=toFirst===a?b:a;
     pairs=[{from:toFirst,to:first,card:toFirst===a?ca:cb},{from:other,to:f[1],card:other===a?ca:cb}];leader=toFirst;
   }else{
     const p=f[3];
-    if(bigJ(p)>=2){setMsg(`${NAMES[p]}持两张大王，抗贡！由${NAMES[first]}先出`);toast('抗贡！');later(()=>startPlay(first),1800);return;}
+    if(bigJ(p)>=2){logPush({k:'sep',txt:`${NAMES[p]}抗贡`});setMsg(`${NAMES[p]}持两张大王，抗贡！由${NAMES[first]}先出`);toast('抗贡！');later(()=>startPlay(first),1800);return;}
     pairs=[{from:p,to:first,card:topCard(p)}];leader=p;
   }
   const txt=[];
@@ -830,6 +1059,7 @@ function runTribute(){
     const c=aiReturn(r.from);G.hands[r.from]=minus(G.hands[r.from],[c]);c.recv=r.to===0;G.hands[r.to].push(c);
     txt.push(`${NAMES[r.from]}还贡${cardTxt(c)}`);
   }
+  logPush({k:'sep',txt:txt.join('；')});
   setMsg(txt.join('；'));sfx('coin');
   const mine=G.returns.find(r=>r.from===0);
   if(mine&&!AUTO){G.phase='return';G.retTo=mine.to;sel.clear();render();toast(`请选一张10及以下的牌还给${NAMES[mine.to]}`,2400);return;}
@@ -843,17 +1073,20 @@ function humanReturn(){
   const hasLow=hand.some(x=>!isW(x,L)&&x.rank<=10);
   if(hasLow&&(isW(c,L)||c.rank>10)){toast('还贡须是10及以下的牌');return;}
   G.hands[0]=minus(hand,[c]);c.recv=false;G.hands[G.retTo].push(c);sel.clear();G.groups=[];
+  logPush({k:'sep',txt:`我还贡${cardTxt(c)}给${NAMES[G.retTo]}`});
   setMsg(`我还贡${cardTxt(c)}给${NAMES[G.retTo]}`);G.phase='deal';render();
   later(()=>startPlay(G.leaderAfter),900);
 }
 function startPlay(leader){
   G.phase='play';G.turn=leader;G.lastPlay=null;G.passed=new Set();G.disp=[null,null,null,null];
+  logPush({k:'sep',txt:`第${G.round}局 · 打${RT[G.level]} · ${NAMES[leader]}先出`});
   if(!$('#msg').textContent.includes('先出'))setMsg(`由【${NAMES[leader]}】先出`);
   schedule();
 }
 function nextActive(s){for(let i=1;i<=4;i++){const n=(s+i)%4;if(!isFin(n))return n;}return s;}
 function schedule(){
   if(G.phase!=='play')return;
+  if(G.turn===0&&!AUTO){if(undoHold)undoHold=false;else pushUndo();}
   G.wait=false;G.disp[G.turn]=null;hintList=[];hintIdx=0;
   render();
   if(G.turn!==0||AUTO){const s=G.turn;later(()=>{if(G.phase==='play'&&G.turn===s)aiAct(s);},AUTO?40:650+Math.random()*450);}
@@ -868,19 +1101,23 @@ function doPlay(s,cards,combo){
   if(!G.lastPlay)G.disp=[null,null,null,null];
   G.hands[s]=minus(G.hands[s],cards);G.played.push(...cards);
   G.disp[s]={cards,combo};G.lastPlay={seat:s,combo};G.passed=new Set();
+  logPush({k:'play',s,combo,cards:cards.slice()});
   statPlay(s,combo);
-  if(combo.power){toast(`${NAMES[s]}：${comboName(combo)}！`,900);const big=combo.type==='jokerbomb';sfx(big?'bigbomb':'bomb');later(()=>shake(big),200);}
+  if(combo.power){toast(`${NAMES[s]}：${comboName(combo)}！`,900);const big=combo.type==='jokerbomb';sfx(big?'bigbomb':'bomb');later(()=>{shake(big);burst(big);},200);}
   else sfx('play');
   say(comboSpeech(combo,G.level));
-  if(!G.hands[s].length){
+  const left=G.hands[s].length;
+  if(left===1||left===2){const w=left===1?'报单':'报双';later(()=>{toast(`${NAMES[s]}${w}！`,1200);sfx('turn');},700);say(`${NAMES[s]}${w}`,true);}
+  if(!left){
     G.finish.push(s);
+    logPush({k:'sep',txt:`${NAMES[s]}${FIN_TXT[G.finish.length-1]}`});
     toast(`${NAMES[s]} ${FIN_TXT[G.finish.length-1]}！`,1200);later(()=>sfx('finish'),350);
     const t=team(s);
     if(G.finish.filter(x=>team(x)===t).length===2){render();later(endRound,1000);return;}
   }
   advance();
 }
-function doPass(s){if(G.lastPlay&&team(G.lastPlay.seat)!==team(s))G.passInfo[s].push(G.lastPlay.combo);G.disp[s]='pass';sfx('pass');say(PASS_WORDS[Math.floor(Math.random()*PASS_WORDS.length)]);G.passed.add(s);advance();}
+function doPass(s){if(G.lastPlay&&team(G.lastPlay.seat)!==team(s))G.passInfo[s].push(G.lastPlay.combo);G.disp[s]='pass';logPush({k:'pass',s});sfx('pass');say(PASS_WORDS[Math.floor(Math.random()*PASS_WORDS.length)]);G.passed.add(s);advance();}
 function advance(){
   const lp=G.lastPlay;
   const others=[0,1,2,3].filter(x=>!isFin(x)&&x!==lp.seat);
@@ -888,6 +1125,7 @@ function advance(){
     let w=lp.seat;let jf=false;
     if(isFin(w)){w=(w+2)%4;jf=true;}
     G.turn=w;G.lastPlay=null;G.passed=new Set();G.wait=true;render();
+    logPush({k:'sep',txt:jf?`${NAMES[w]}接风，重新出牌`:`${NAMES[w]}收下这一轮`});
     setMsg(jf?`${NAMES[w]}接风，由${NAMES[w]}出牌`:`${NAMES[w]}获得出牌权`);
     later(()=>{G.disp=[null,null,null,null];schedule();},900);
     return;
@@ -897,6 +1135,7 @@ function advance(){
 const resWrap=b=>'<div class="res">'+b.replace('</table>','</table><div>')+'</div></div>';
 function endRound(){
   G.phase='over';
+  undoStack=[];sel.clear();
   const f=G.finish.slice();
   const rest=[0,1,2,3].filter(x=>!f.includes(x)).sort((a,b)=>G.hands[a].length-G.hands[b].length);
   f.push(...rest);
@@ -937,6 +1176,22 @@ function endRound(){
 
 /* ================= 玩家操作 ================= */
 function selectedCards(){return G.hands[0].filter(c=>sel.has(c.id));}
+// 悔牌：每次轮到我都存一份快照，可一步步退回到之前的决策点
+function snap(){return{hands:G.hands.map(h=>h.slice()),played:G.played.slice(),passInfo:G.passInfo.map(a=>a.slice()),
+  finish:G.finish.slice(),disp:G.disp.slice(),lastPlay:G.lastPlay,passed:new Set(G.passed),turn:G.turn,
+  log:G.log.slice(),groups:(G.groups||[]).map(g=>g.slice()),st:{bombs:ST.bombs,sflush:ST.sflush,jbomb:ST.jbomb}};}
+function pushUndo(){if(AUTO||G.phase!=='play')return;undoStack.push(snap());if(undoStack.length>16)undoStack.shift();}
+function humanUndo(){
+  if(AUTO||!undoStack.length||G.phase!=='play')return;
+  const s=undoStack.pop();G.token++;
+  G.hands=s.hands;G.played=s.played;G.passInfo=s.passInfo;G.finish=s.finish;G.disp=s.disp;
+  G.lastPlay=s.lastPlay;G.passed=s.passed;G.turn=s.turn;G.log=s.log;G.groups=s.groups;
+  ST.bombs=s.st.bombs;ST.sflush=s.st.sflush;ST.jbomb=s.st.jbomb;saveStats();
+  G.wait=false;sel.clear();hintList=[];hintIdx=0;
+  for(let i=0;i<4;i++){const el=i===0?$('#myPlayed'):$('#pl'+i);el._d=undefined;}
+  undoHold=true;G.noFly=true;render();G.noFly=false;schedule();
+  toast('已悔牌，回到上一个出牌点',1000);sfx('tick');
+}
 function humanPlay(){
   if(G.phase!=='play'||G.turn!==0||G.wait)return;
   const cs=selectedCards();if(!cs.length){toast('请先选牌');return;}
@@ -945,14 +1200,15 @@ function humanPlay(){
   if(G.lastPlay){
     interps=interps.filter(c=>beats(c,G.lastPlay.combo));
     if(!interps.length){toast('管不上');sfx('err');return;}
-    sel.clear();doPlay(0,cs,interps[0]);return;
   }
-  const normal=interps.filter(c=>!c.power);
-  if(!interps[0].power&&new Set(normal.map(c=>c.type)).size>1){
-    modal('选择牌型','这手牌可以有多种出法：',normal.map(c=>[comboName(c),()=>{sel.clear();doPlay(0,cs,c);}]).concat([['取消',null,true]]));
+  const uniq=[],seen=new Set();
+  for(const c of interps){const k=c.type+'|'+c.n+'|'+c.key;if(seen.has(k))continue;seen.add(k);uniq.push(c);}
+  if(uniq.length>1){
+    modal('选择牌型','这手牌可以有多种出法，选一个：',
+      uniq.map(c=>[comboDesc(c,G.level)+(c.type==='sflush'?'（炸弹）':''),()=>{sel.clear();doPlay(0,cs,c);}]).concat([['取消',null,true]]));
     return;
   }
-  sel.clear();doPlay(0,cs,interps[0]);
+  sel.clear();doPlay(0,cs,uniq[0]);
 }
 function humanPass(){if(G.phase!=='play'||G.turn!==0||G.wait||!G.lastPlay)return;sel.clear();doPass(0);}
 function humanHint(){
@@ -968,17 +1224,18 @@ function humanHint(){
   }
   if(!hintList.length){toast('没有能管上的牌');return;}
   const p=hintList[hintIdx%hintList.length];hintIdx++;
-  sel=new Set(p.cards.map(c=>c.id));renderHand();
+  sel=new Set(p.cards.map(c=>c.id));renderHand();renderSelInfo();
+  toast(`${comboDesc(p.combo,G.level)}${hintList.length>1?`（${hintIdx}/${hintList.length}，再点切换）`:''}`,1100);
 }
 
 /* 手牌触摸选择：点按或滑动多选 */
 (function(){
   const el=$('#hand');let drag=null;
   const idAt=(x,y)=>{const e=document.elementFromPoint(x,y);const c=e&&e.closest&&e.closest('#hand .card');return c?+c.dataset.id:null;};
-  const apply=(id,on)=>{sfx('tick');if(on)sel.add(id);else sel.delete(id);const e=el.querySelector(`.card[data-id="${id}"]`);if(e)e.classList.toggle('sel',on);hintList=[];updSortBtn();};
+  const apply=(id,on)=>{sfx('tick');if(on)sel.add(id);else sel.delete(id);const e=el.querySelector(`.card[data-id="${id}"]`);if(e)e.classList.toggle('sel',on);hintList=[];updSortBtn();renderSelInfo();};
   el.addEventListener('pointerdown',e=>{
     e.preventDefault();const id=idAt(e.clientX,e.clientY);
-    if(id===null){sel.clear();renderHand();return;}
+    if(id===null){sel.clear();renderHand();renderSelInfo();return;}
     drag={mode:!sel.has(id),done:new Set([id])};apply(id,drag.mode);
     try{el.setPointerCapture(e.pointerId);}catch(_){}
   });
@@ -997,21 +1254,47 @@ const RULES=`<ul>
 <li><b>进贡</b>：从第二局起，末游把最大的牌（红心级牌除外）贡给头游；双下时输方两家都进贡，大的给头游。收贡者还一张10及以下的牌。进贡方持有两张大王可<b>抗贡</b>。进贡者先出牌，抗贡则头游先出。</li>
 <li><b>过A</b>：打A时须拿头游且对家不是末游才算过A获胜；打A三次不过退回打2。</li>
 </ul>
-<p style="color:#777">操作：点按或在手牌上滑动选牌，点空白处取消选择；“提示”可循环推荐出法。手牌自动从小到大排列（同点数从上到下♠♥♣♦，百搭在最右）；选中几张牌点“理牌”可把它们归成一列放到最左边，不选牌时点“还原”恢复自动排序。进度会自动保存在本机。</p>`;
+<p style="color:#777">操作：点按或在手牌上滑动选牌，点空白处取消选择；选中后牌桌中间会实时显示牌型和能不能压过。“提示”可循环推荐出法并说明牌型。手牌自动从小到大排列（同点数从上到下♠♥♣♦，百搭在最右）；选中几张牌点“理牌”可把它们归成一列放到最左边，不选牌时点“还原”恢复自动排序。进度会自动保存在本机。</p>
+<p style="color:#777">顶栏：<b>悔牌</b> 退回上一个自己的出牌点（可连续退，AI 思考时也能退）、<b>记牌</b> 打开记牌器与出牌记录（记牌器显示每个点数在别人手里还有几张，小字是“我有/已出”）。电脑上可用键盘：空格/回车出牌、P 不出、H 提示、S 理牌、Z 悔牌、C 记牌器、L 出牌记录、Esc 关闭。</p>`;
 
 $('#bSort').onclick=humanSort;$('#bPlay').onclick=humanPlay;$('#bPass').onclick=humanPass;$('#bHint').onclick=humanHint;$('#bRet').onclick=humanReturn;
-const openDiff=()=>modal('电脑难度',`<p><b>普通</b>：按简单经验出牌。</p><p><b>困难</b>：记牌、整体拆牌规划、不乱用大牌和炸弹、配合队友、残局会拦截和算牌。</p><p>当前：<b>${G.diff==='hard'?'困难':'普通'}</b>（立即生效，队友和对手同时切换）</p>`,
-  [['困难',()=>{G.diff='hard';saveDiff();renderDiff();}],['普通',()=>{G.diff='normal';saveDiff();renderDiff();},true]]);
+$('#bUndo').onclick=humanUndo;
+$('#bCount').onclick=()=>togglePanel();
+$('#pClose').onclick=()=>togglePanel(false);
+$('#tabCount').onclick=()=>{panelTab='count';renderPanel();};
+$('#tabLog').onclick=()=>{panelTab='log';renderPanel();};
+const openDiff=()=>modal('电脑难度',
+  `<p><b>普通</b>：按简单经验出牌。</p><p><b>困难</b>：记牌、整体拆牌规划、不乱用大牌和炸弹、配合队友、残局会拦截和算牌。</p>`+
+  `<p>也可以给队友和对手设不同难度，换个手感。</p><p>当前：<b>${seatDiffName()}</b>（立即生效）</p>`,
+  Object.keys(SEATDIFF).map((k,i)=>[SEATDIFF[k].name,()=>setSeatDiff(k),i>1]).concat([['取消',null,true]]));
 function saveDiff(){try{localStorage.setItem('guandan_diff',G.diff);}catch(e){}}
 try{const d=localStorage.getItem('guandan_diff');if(d==='normal'||d==='hard')G.diff=d;}catch(e){}
+// 老版本只存过 guandan_diff，没有 seatdiff：按它推导出分队模式，否则菜单会显示"全部困难"但实际打普通
+try{const m=localStorage.getItem('guandan_seatdiff');applySeatDiff(m&&SEATDIFF[m]?m:(G.diff==='normal'?'all-normal':'all-hard'));}catch(e){}
 const openRules=()=>modal('掼蛋规则',RULES,[['知道了',null]]);
 const openNew=()=>modal('重新开始','确定放弃当前进度，从2重新开始吗？',[['重新开始',()=>{G.token++;resetGame();startRound();}],['取消',null,true]]);
 const SND_NAME={all:'音效+语音',sfx:'仅音效',off:'静音'};
 function setSnd(m){SND.mode=m;try{localStorage.setItem('guandan_snd',m);}catch(e){}if(m==='off'&&'speechSynthesis' in window)try{speechSynthesis.cancel();}catch(e){}renderDiff();if(m!=='off')sfx('turn');}
 $('#bSnd').onclick=()=>{setSnd(SND.mode==='all'?'sfx':SND.mode==='sfx'?'off':'all');toast('声音：'+SND_NAME[SND.mode],1000);};
-$('#bMenu').onclick=()=>modal('菜单',`<p>电脑难度：<b>${G.diff==='hard'?'困难':'普通'}</b>　声音：<b>${SND_NAME[SND.mode]}</b></p>`,
+$('#bMenu').onclick=()=>modal('菜单',`<p>电脑难度：<b>${seatDiffName()}</b>　声音：<b>${SND_NAME[SND.mode]}</b></p>`,
   [['电脑难度',openDiff],['声音',()=>modal('声音',`<p>当前：<b>${SND_NAME[SND.mode]}</b></p><p style="color:#777">语音报牌使用手机自带的中文朗读；iPhone 需关闭静音开关才能听到。</p>`,
-    [['音效+语音',()=>setSnd('all')],['仅音效',()=>setSnd('sfx')],['静音',()=>setSnd('off'),true]])],['屏幕方向',openOrient],['战绩',openStats],['规则',openRules],['重新开始',openNew],['退出游戏',openExit],['关闭',null,true]]);
+    [['音效+语音',()=>setSnd('all')],['仅音效',()=>setSnd('sfx')],['静音',()=>setSnd('off'),true]])],['记牌器',()=>togglePanel(true,'count')],['出牌记录',()=>togglePanel(true,'log')],['屏幕方向',openOrient],['战绩',openStats],['规则',openRules],['重新开始',openNew],['退出游戏',openExit],['关闭',null,true]]);
+// 电脑键盘快捷键（弹窗打开时只处理回车/Esc）
+document.addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase(),m=$('#modal').classList.contains('show');
+  if(k==='escape'){if(m)$('#modal').classList.remove('show');else togglePanel(false);return;}
+  if(m){if(k==='enter'||k===' '){e.preventDefault();const b=$('#mBtns button');if(b)b.click();}return;}
+  if(k===' '||k==='enter'){e.preventDefault();if(G.phase==='return')humanReturn();else humanPlay();}
+  else if(k==='p')humanPass();
+  else if(k==='h')humanHint();
+  else if(k==='s')humanSort();
+  else if(k==='z')humanUndo();
+  else if(k==='c')togglePanel(undefined,'count');
+  else if(k==='l')togglePanel(undefined,'log');
+  else return;
+  e.preventDefault();
+});
 // 屏幕方向：auto=跟随手机，portrait=竖屏，landscape=横屏（与手机方向不一致时把画面转90°）
 let orient='auto';try{const o=localStorage.getItem('guandan_orient');if(o==='portrait'||o==='landscape')orient=o;localStorage.removeItem('guandan_land');}catch(e){}
 const ORIENT_NAME={auto:'跟随手机',portrait:'竖屏',landscape:'横屏'};
@@ -1051,6 +1334,7 @@ function exitGame(){
   G.token++;save();
   try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}
   G.phase='idle';G.hands=[[],[],[],[]];G.finish=[];G.disp=[null,null,null,null];G.lastPlay=null;sel.clear();
+  G.log=[];undoStack=[];togglePanel(false);
   setMsg('已退出，进度已保存');render();
   try{window.close();}catch(e){}   // 安装到桌面的应用可直接关闭；浏览器里则回到开始界面
   setTimeout(showHome,250);
