@@ -257,6 +257,7 @@ const TYPE_TXT={single:'单张',pair:'对子',triple:'三张',fullhouse:'三带�
 const AUTO=new URLSearchParams(location.search).has('auto'); // 调试：四家全电脑
 const SPEED=AUTO?0.02:1;
 const SAVE_KEY='guandan_save_v1';
+const ROUND_KEY='guandan_round_v1';
 const $=s=>document.querySelector(s);
 
 let G={levels:[2,2],declarer:null,aFails:[0,0],prevFinish:null,round:0,token:0,
@@ -415,8 +416,8 @@ function aiChoose(s){
       if(!rem.length)sc+=5000;
       sc+=p.cards.length*0.6-Math.min(p.combo.key,20)*0.25;
       if(p.combo.power&&rem.length)sc-=10;
-      if(oppMin===1&&p.combo.type==='single'&&p.combo.key<16)sc-=25;
-      if(oppMin===2&&p.combo.type==='pair')sc-=15;
+      if(oppMin<=8&&p.combo.n===oppMin&&!p.combo.power)sc-=p.combo.key>=16?12:30; // 别送对手正好走完的张数
+      if(oppMin<=3&&p.combo.n>oppMin)sc+=5;
       if(partnerCnt===1&&p.combo.type==='single'&&p.combo.key<10)sc+=14;
       if(partnerCnt===2&&p.combo.type==='pair'&&p.combo.key<10)sc+=10;
       if(sc>bs){bs=sc;best=p;}
@@ -429,7 +430,7 @@ function aiChoose(s){
   let best=null,bs=-1e9,braw=0;
   for(const p of cands){
     const rem=minus(hand,p.cards);let raw=evalHand(rem,L);if(!rem.length)raw+=5000;
-    const sc=raw-Math.min(p.combo.key,20)*0.2-(p.combo.power?2:0);
+    const sc=raw-Math.min(p.combo.key,20)*0.2-(p.combo.power?2:0)-(oppMin<=8&&p.combo.n===oppMin&&!p.combo.power?20:0);
     if(sc>bs){bs=sc;best=p;braw=raw;}
   }
   const gain=braw-base;
@@ -470,15 +471,18 @@ const FULL_DECK=makeDeck();
 function mkCtx(s){
   const L=G.level,mine=new Set(G.hands[s].map(c=>c.id)),played=new Set(G.played.map(c=>c.id));
   const pool=FULL_DECK.filter(c=>!mine.has(c.id)&&!played.has(c.id));
-  const maxKey={};
+  const maxKey={},byN={};
   for(const p of genPlays(pool,L)){const cb=p.combo;
+    // 按张数分桶：用来判断"对手能不能一次打出正好 n 张压过这手牌"
+    const n=p.cards.length;
+    if(n<=8){const k=cb.type+'|'+cb.n+'|'+cb.key;const m=byN[n]||(byN[n]=new Map());if(!m.has(k))m.set(k,cb);}
     if(cb.power){
       // 外面的同花顺同样能当顺子压人，别把它漏掉，否则会误判自己的顺子是大牌
       if(cb.type==='sflush'){const k='straight5';if(!(k in maxKey)||cb.key>maxKey[k])maxKey[k]=cb.key;}
       continue;
     }
     const k=cb.type+cb.n;if(!(k in maxKey)||cb.key>maxKey[k])maxKey[k]=cb.key;}
-  return {s,L,maxKey,memo:new Map()};
+  return {s,L,maxKey,byN,memo:new Map()};
 }
 // 外面没有同牌型更大的（不算炸弹）= 大牌/控制
 const isBoss=(ctx,cb)=>cb.power>0||!(ctx.maxKey[cb.type+cb.n]>cb.key);
@@ -533,8 +537,20 @@ function planOf(ctx,hand){
 }
 const weakCount=(ctx,pl)=>pl.combos.filter(c=>!c.power&&!isBoss(ctx,c)).length;
 function passedOn(o,cb){return (G.passInfo[o]||[]).some(e=>e.type===cb.type&&e.n===cb.n&&e.key<=cb.key);}
+// 外面（未现的牌）能凑出的 n 张牌型里，有多大比例能压过 cb
+// 用这个比例估计"对手正好一次走完"的概率：自己出的牌越大，能压过的组合越少
+function dumpChance(ctx,n,cb){const m=ctx.byN[n];if(!m||!m.size)return 0;let beat=0;for(const x of m.values())if(beats(x,cb))beat++;return beat/m.size;}
+// 送头游风险：对手只剩 n 张，这手牌又正好 n 张，他一旦压过就直接头游
+// 紧接着轮到他时最危险；隔着一家时队友还有机会拦
+function feedRisk(ctx,s,o,cb){
+  if(isFin(o))return 0;
+  const n=G.hands[o].length;
+  if(n<1||n>8||cb.n!==n)return 0;
+  if(passedOn(o,cb))return 0;
+  return dumpChance(ctx,n,cb)*(nextActive(s)===o?1:0.5);
+}
 
-const HP={newEnd:1,balW:8,tempoB:7,tempoW:2,fin1:8,ctrlM:3,ctrlEarly:6,normM:-3,leadBomb:8,cash:30};
+const HP={newEnd:1,balW:8,tempoB:7,tempoW:2,fin1:8,ctrlM:3,ctrlEarly:6,normM:-3,leadBomb:8,cash:30,feedOut:60,blockSm:16};
 function hardChoose(s){
   const hand=G.hands[s],L=G.level,ctx=mkCtx(s);
   const plays=genPlays(hand,L);
@@ -564,22 +580,14 @@ function hardChoose(s){
         // 控制力平衡：每出一手小牌后要靠一手大牌夺回牌权，所以大牌数至少要 = 小牌数-1
         const deficit=Math.max(0,(weakCount(ctx,pr)-1)-ctrlOf(pr));
         sc-=deficit*HP.balW;
-        for(const o of opps){const n=oc(o);
-          if(n<=4){
-            if(!boss&&cb.n===n)sc-=25;                          // 别送对手正好走完的牌型
-            else if(!boss&&cb.n<n&&n<=2)sc-=4;
-            if(cb.n>n)sc+=6;                                    // 对手张数不够，跟不上
-            if(boss&&weak<=1)sc+=6;                             // 只有快走完时才先出大牌
-          }
-          if(n<=8&&!boss&&passedOn(o,cb))sc+=8;               // 他刚要不起这种牌
-        }
-      }else for(const o of opps){const n=oc(o);
-        if(n<=4){
-          if(!boss&&cb.n===n)sc-=25;
-          else if(!boss&&cb.n<n&&cb.n<=2)sc-=8;
-          if(boss)sc+=6;if(cb.n>n)sc+=6;
-        }
-        if(n<=8&&passedOn(o,cb))sc+=8;
+      }
+      for(const o of opps){const n=oc(o);
+        const risk=feedRisk(ctx,s,o,cb);
+        if(risk)sc-=HP.feedOut*risk;                        // 别送对手正好一次走完的牌
+        if(n<=2&&cb.n>n&&nxt===o)sc+=HP.blockSm;            // 他张数不够又没炸弹，这轮绝对走不了
+        else if(n===3&&cb.n>n)sc+=6;
+        if(n<=8&&!risk&&!boss&&passedOn(o,cb))sc+=8;         // 他刚要不起这种牌
+        if(n<=4&&boss&&weak<=1)sc+=6;                        // 只有快走完时才先出大牌
       }
       if(pAct&&pCnt<=4&&!(team(nxt)!==team(s)&&oc(nxt)<=pCnt)){ // 给队友送牌
         if(cb.n===pCnt||(cb.n===1&&pCnt<=3))sc+=12-Math.min(cb.key,15)*0.7;
@@ -593,12 +601,16 @@ function hardChoose(s){
   const cands=plays.filter(p=>beats(p.combo,lp.combo));
   if(!cands.length)return null;
   const score=p=>{const pr=P(p),cb=p.combo;const boss=isBoss(ctx,cb);
-    return pr.v+((cb.power||boss)?HP.tempoB:HP.tempoW)+(weakCount(ctx,pr)<=1?HP.fin1:0)-Math.min(cb.key,17)*0.05;};
+    let v=pr.v+((cb.power||boss)?HP.tempoB:HP.tempoW)+(weakCount(ctx,pr)<=1?HP.fin1:0)-Math.min(cb.key,17)*0.05;
+    for(const o of opps){const r=feedRisk(ctx,s,o,cb);if(r)v-=HP.feedOut*r;}   // 压牌也别把对手送走
+    return v;};
   let bN=null,sN=-1e9,bB=null,sB=-1e9;
   for(const p of cands){const sc=score(p);if(p.combo.power){if(sc>sB){sB=sc;bB=p;}}else if(sc>sN){sN=sc;bN=p;}}
   const base=cur.v;
   if(team(lp.seat)===team(s)){ // 队友的牌：一般不压
     if(isFin(lp.seat)||pCnt<=6||lp.combo.power||isBoss(ctx,lp.combo))return null;
+    // 下家牌少且能一次压过队友这手牌：我顶一手他走不完的，别让他直接头游
+    if(bN&&team(nxt)!==team(s)&&feedRisk(ctx,s,nxt,lp.combo)>0&&!feedRisk(ctx,s,nxt,bN.combo))return bN;
     if(bN&&bN.combo.key<14&&sN-base>=7&&team(nxt)!==team(s)&&oc(nxt)<=8)return bN; // 顶牌，防止下家顺牌走
     return null;
   }
@@ -1017,10 +1029,34 @@ function modal(title,body,btns){
 /* ================= 流程 ================= */
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({levels:G.levels,declarer:G.declarer,aFails:G.aFails,prevFinish:G.prevFinish,round:G.round,gameScore:G.gameScore||0}));}catch(e){}}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(d&&d.levels){Object.assign(G,d);return true;}}catch(e){}return false;}
-function resetGame(){G.gameScore=0;G.levels=[2,2];G.declarer=null;G.aFails=[0,0];G.prevFinish=null;G.round=0;save();}
+// 局内进度：退出时可选择把整副牌存下来，下次启动从断点接着打
+function saveRound(){
+  if(AUTO||(G.phase!=='play'&&G.phase!=='return'))return false;
+  try{localStorage.setItem(ROUND_KEY,JSON.stringify({
+    levels:G.levels,declarer:G.declarer,aFails:G.aFails,prevFinish:G.prevFinish,round:G.round,gameScore:G.gameScore||0,
+    level:G.level,phase:G.phase,turn:G.turn,hands:G.hands,played:G.played,passInfo:G.passInfo,
+    finish:G.finish,disp:G.disp,lastPlay:G.lastPlay,passed:[...G.passed],log:G.log,groups:G.groups||[],
+    retTo:G.retTo,returns:G.returns,leaderAfter:G.leaderAfter}));return true;}catch(e){return false;}
+}
+function clearRound(){try{localStorage.removeItem(ROUND_KEY);}catch(e){}}
+function peekRound(){try{const d=JSON.parse(localStorage.getItem(ROUND_KEY)||'null');return d&&d.hands&&d.hands.length===4&&d.round?d:null;}catch(e){return null;}}
+function resumeRound(){
+  const d=peekRound();if(!d)return false;
+  G.token++;
+  Object.assign(G,{levels:d.levels,declarer:d.declarer,aFails:d.aFails,prevFinish:d.prevFinish,round:d.round,gameScore:d.gameScore||0,
+    level:d.level,phase:d.phase,turn:d.turn,wait:false,hands:d.hands,played:d.played,passInfo:d.passInfo,
+    finish:d.finish,disp:d.disp,lastPlay:d.lastPlay,passed:new Set(d.passed),log:d.log,groups:d.groups||[],
+    retTo:d.retTo,returns:d.returns,leaderAfter:d.leaderAfter});
+  sel.clear();undoStack=[];undoHold=false;hintList=[];hintIdx=0;G.dealAnim=false;
+  for(let s=0;s<4;s++){const el=s===0?$('#myPlayed'):$('#pl'+s);el._d=undefined;}
+  clearRound();render();
+  if(G.phase==='return'){setMsg(`继续本局：请还贡给${NAMES[G.retTo]}`);toast(`请选一张10及以下的牌还给${NAMES[G.retTo]}`,2400);return true;}
+  setMsg(`继续第${G.round}局`);schedule();return true;
+}
+function resetGame(){G.gameScore=0;G.levels=[2,2];G.declarer=null;G.aFails=[0,0];G.prevFinish=null;G.round=0;clearRound();save();}
 
 function startRound(){
-  G.token++;G.round++;
+  G.token++;G.round++;clearRound();
   G.level=G.declarer===null?2:G.levels[G.declarer];
   const deck=makeDeck();
   for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
@@ -1135,7 +1171,7 @@ function advance(){
 const resWrap=b=>'<div class="res">'+b.replace('</table>','</table><div>')+'</div></div>';
 function endRound(){
   G.phase='over';
-  undoStack=[];sel.clear();
+  undoStack=[];sel.clear();clearRound();
   const f=G.finish.slice();
   const rest=[0,1,2,3].filter(x=>!f.includes(x)).sort((a,b)=>G.hands[a].length-G.hands[b].length);
   f.push(...rest);
@@ -1323,6 +1359,15 @@ updateOrient();
 
 if('serviceWorker' in navigator&&/^https:$/.test(location.protocol)&&/github\.io$/.test(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 function showHome(){
+  const r=peekRound();
+  if(r){
+    modal('掼蛋',`<p style="text-align:center">上次退出时保存了<b>第${r.round}局</b>（打 <b>${RT[r.level]}</b>），可以接着打。</p>`+
+      `<p style="text-align:center">我方打 <b>${RT[r.levels[0]]}</b>，对方打 <b>${RT[r.levels[1]]}</b>，本场积分 <b>${sgn(r.gameScore||0)}</b></p>`+
+      `<p style="color:#777;text-align:center;font-size:12px">剩余张数：我 ${r.hands[0].length} · 下家 ${r.hands[1].length} · 对家 ${r.hands[2].length} · 上家 ${r.hands[3].length}</p>`,
+      [['继续本局',resumeRound],['重新发牌本局',()=>{clearRound();startRound();},true],['重新开始',()=>{resetGame();startRound();},true],
+       ['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='返回';b.onclick=()=>{$('#modal').classList.remove('show');showHome();};},true]]);
+    return;
+  }
   if(G.round>0&&!(G.declarer===null&&G.levels[0]===2&&G.levels[1]===2&&!G.prevFinish)){
     modal('掼蛋',`<p style="text-align:center">上次进度：我方打 <b>${RT[G.levels[0]]}</b>，对方打 <b>${RT[G.levels[1]]}</b>，本场积分 <b>${sgn(G.gameScore||0)}</b></p>`,
       [['继续游戏',startRound],['重新开始',()=>{resetGame();startRound();},true],['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='返回';b.onclick=()=>{$('#modal').classList.remove('show');showHome();};},true]]);
@@ -1330,17 +1375,28 @@ function showHome(){
     modal('掼蛋','<p>你与<b>对家</b>（屏幕上方）组队，对抗左右两位电脑。先过A的一方获胜。</p>'+RULES,[['开始游戏',startRound]]);
   }
 }
-function exitGame(){
-  G.token++;save();
+function exitGame(keepRound){
+  G.token++;
+  const kept=keepRound?saveRound():false;
+  if(!kept)clearRound();
+  save();
   try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}
   G.phase='idle';G.hands=[[],[],[],[]];G.finish=[];G.disp=[null,null,null,null];G.lastPlay=null;sel.clear();
   G.log=[];undoStack=[];togglePanel(false);
-  setMsg('已退出，进度已保存');render();
+  setMsg(kept?'已退出，本局已保存，下次可接着打':'已退出，本局未保存');render();
   try{window.close();}catch(e){}   // 安装到桌面的应用可直接关闭；浏览器里则回到开始界面
   setTimeout(showHome,250);
 }
-const openExit=()=>modal('退出游戏',`<p>退出后会保存当前级数和积分（我方 <b>${RT[G.levels[0]]}</b> · 对方 <b>${RT[G.levels[1]]}</b>）。</p><p style="color:#777">正在打的这一局不保存，下次继续时重新发牌。</p>`,
-  [['退出',exitGame],['取消',null,true]]);
+const openExit=()=>{
+  const canKeep=!AUTO&&(G.phase==='play'||G.phase==='return');
+  const body=`<p>退出后级数和积分都会保留（我方 <b>${RT[G.levels[0]]}</b> · 对方 <b>${RT[G.levels[1]]}</b>）。</p>`+
+    (canKeep?`<p>要不要把<b>这一局</b>也保存下来？保存后下次启动可以从刚才的牌面接着打。</p>`+
+             `<p style="color:#777;font-size:12px">第${G.round}局 · 打${RT[G.level]} · 我剩${G.hands[0].length}张</p>`
+            :`<p style="color:#777">当前不在出牌阶段，本局无法保存，下次继续时重新发牌。</p>`);
+  modal('退出游戏',body,canKeep
+    ?[['保存本局并退出',()=>exitGame(true)],['不保存退出',()=>exitGame(false),true],['取消',null,true]]
+    :[['退出',()=>exitGame(false)],['取消',null,true]]);
+};
 const had=load();
 render();
 if(AUTO){startRound();}
