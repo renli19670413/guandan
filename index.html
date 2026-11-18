@@ -103,6 +103,7 @@ body.land #modal .box{max-height:92%}
 /* 横屏：结算窗口紧凑排版，左边名次、右边得分 */
 body.land #modal{padding:6px}
 body.land #modal .box{padding:10px 16px 10px;max-width:680px}
+body.land #modal .box.narrow{max-width:520px}
 body.land #modal h2{font-size:16px;margin-bottom:4px}
 body.land #modal .body{font-size:13px;line-height:1.4}
 body.land #modal .body td{padding:2px 6px}
@@ -122,6 +123,7 @@ body.land .res table{margin:0}
 #modal{position:fixed;inset:0;isolation:isolate;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}
 #modal.show{display:flex}
 #modal .box{background:#fff;color:#222;border-radius:14px;padding:18px 18px 14px;width:100%;max-width:420px;max-height:86vh;overflow:auto;-webkit-user-select:text;user-select:text}
+#modal .box.narrow{max-width:340px}
 #modal h2{font-size:19px;margin-bottom:10px;text-align:center}
 #modal .body{font-size:14px;line-height:1.65}
 #modal .body ul{padding-left:18px}
@@ -232,8 +234,8 @@ body.land .pseat{flex-direction:column;gap:1px;margin:0 0 4px;padding:4px 7px}
   <div id="actions">
     <div id="me"></div>
     <button class="btn" id="bSort">理牌</button>
+    <button class="btn" id="bPass">不要</button>
     <button class="btn" id="bHint">提示</button>
-    <button class="btn" id="bPass">不出</button>
     <button class="btn" id="bPlay">出牌</button>
     <button class="btn" id="bRet">还贡</button>
   </div>
@@ -258,6 +260,7 @@ const AUTO=new URLSearchParams(location.search).has('auto'); // 调试：四家�
 const SPEED=AUTO?0.02:1;
 const SAVE_KEY='guandan_save_v1';
 const ROUND_KEY='guandan_round_v1';
+const AUTO_KEY='guandan_auto_v1';
 const $=s=>document.querySelector(s);
 
 let G={levels:[2,2],declarer:null,aFails:[0,0],prevFinish:null,round:0,token:0,
@@ -848,7 +851,7 @@ function renderPlayed(s){
   if(!changed&&el._t===tgt)return;
   el._d=d;el._t=tgt;
   if(!d){el.innerHTML='';return;}
-  if(d==='pass'){el.innerHTML='<span class="pass">不出</span>';return;}
+  if(d==='pass'){el.innerHTML='<span class="pass">不要</span>';return;}
   const big=d.combo.power?'💥':'';
   el.innerHTML=`<span class="ctag${tgt?' target':''}">${big}${comboDesc(d.combo,G.level)}</span>`+miniHTML(d.cards,G.level);
   if(changed)flyIn(el,s);
@@ -995,7 +998,7 @@ function logHTML(){
   for(const e of G.log){
     if(e.k==='sep'){h+=`<div class="logsep">${e.txt}</div>`;continue;}
     const who=`<span class="who ${team(e.s)===0?'us':'them'}">${NAMES[e.s]}</span>`;
-    if(e.k==='pass'){h+=`<div class="logrow pass">${who}<span class="cs">不出</span></div>`;continue;}
+    if(e.k==='pass'){h+=`<div class="logrow pass">${who}<span class="cs">不要</span></div>`;continue;}
     h+=`<div class="logrow${e.combo.power?' bomb':''}">${who}<span class="cb">${comboName(e.combo)}</span><span class="cs">${sortForShow(e.cards,G.level).map(cardTxt).join(' ')}</span></div>`;
   }
   return h;
@@ -1017,8 +1020,9 @@ function setMsg(t){$('#msg').textContent=t;}
 let toastT=0;
 function toast(t,ms=1600){const el=$('#toast');if($('#modal').classList.contains('show'))return;el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),ms);}
 function hideToast(){clearTimeout(toastT);$('#toast').classList.remove('show');}
-function modal(title,body,btns){
+function modal(title,body,btns,cls){
   hideToast();
+  $('#modal .box').className='box'+(cls?' '+cls:'');
   $('#mTitle').textContent=title;$('#mBody').innerHTML=body;
   const b=$('#mBtns');b.innerHTML='';
   for(const [txt,fn,alt] of btns){const e=document.createElement('button');e.textContent=txt;if(alt)e.className='alt';
@@ -1029,19 +1033,24 @@ function modal(title,body,btns){
 /* ================= 流程 ================= */
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({levels:G.levels,declarer:G.declarer,aFails:G.aFails,prevFinish:G.prevFinish,round:G.round,gameScore:G.gameScore||0}));}catch(e){}}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(d&&d.levels){Object.assign(G,d);return true;}}catch(e){}return false;}
-// 局内进度：退出时可选择把整副牌存下来，下次启动从断点接着打
+// 局内进度：自动断点续打（切后台/关页面）+ 退出时可选择保存整副牌
+function roundState(){return{
+  levels:G.levels,declarer:G.declarer,aFails:G.aFails,prevFinish:G.prevFinish,round:G.round,gameScore:G.gameScore||0,
+  level:G.level,phase:G.phase,turn:G.turn,hands:G.hands,played:G.played,passInfo:G.passInfo,
+  finish:G.finish,disp:G.disp,lastPlay:G.lastPlay,passed:[...G.passed],log:G.log,groups:G.groups||[],
+  retTo:G.retTo,returns:G.returns,leaderAfter:G.leaderAfter};}
+const canSaveRound=()=>!AUTO&&(G.phase==='play'||G.phase==='return');
 function saveRound(){
-  if(AUTO||(G.phase!=='play'&&G.phase!=='return'))return false;
-  try{localStorage.setItem(ROUND_KEY,JSON.stringify({
-    levels:G.levels,declarer:G.declarer,aFails:G.aFails,prevFinish:G.prevFinish,round:G.round,gameScore:G.gameScore||0,
-    level:G.level,phase:G.phase,turn:G.turn,hands:G.hands,played:G.played,passInfo:G.passInfo,
-    finish:G.finish,disp:G.disp,lastPlay:G.lastPlay,passed:[...G.passed],log:G.log,groups:G.groups||[],
-    retTo:G.retTo,returns:G.returns,leaderAfter:G.leaderAfter}));return true;}catch(e){return false;}
+  if(!canSaveRound())return false;
+  try{localStorage.setItem(ROUND_KEY,JSON.stringify(roundState()));localStorage.removeItem(AUTO_KEY);return true;}catch(e){return false;}
 }
-function clearRound(){try{localStorage.removeItem(ROUND_KEY);}catch(e){}}
-function peekRound(){try{const d=JSON.parse(localStorage.getItem(ROUND_KEY)||'null');return d&&d.hands&&d.hands.length===4&&d.round?d:null;}catch(e){return null;}}
-function resumeRound(){
-  const d=peekRound();if(!d)return false;
+function autoSaveRound(){if(!canSaveRound())return;try{localStorage.setItem(AUTO_KEY,JSON.stringify(roundState()));}catch(e){}}
+function clearRound(){try{localStorage.removeItem(ROUND_KEY);localStorage.removeItem(AUTO_KEY);}catch(e){}}
+function readRound(key){try{const d=JSON.parse(localStorage.getItem(key)||'null');return d&&d.hands&&d.hands.length===4&&d.round?d:null;}catch(e){return null;}}
+const peekRound=()=>readRound(ROUND_KEY);
+const peekAuto=()=>readRound(AUTO_KEY);
+function restoreRound(d){
+  if(!d)return false;
   G.token++;
   Object.assign(G,{levels:d.levels,declarer:d.declarer,aFails:d.aFails,prevFinish:d.prevFinish,round:d.round,gameScore:d.gameScore||0,
     level:d.level,phase:d.phase,turn:d.turn,wait:false,hands:d.hands,played:d.played,passInfo:d.passInfo,
@@ -1053,6 +1062,7 @@ function resumeRound(){
   if(G.phase==='return'){setMsg(`继续本局：请还贡给${NAMES[G.retTo]}`);toast(`请选一张10及以下的牌还给${NAMES[G.retTo]}`,2400);return true;}
   setMsg(`继续第${G.round}局`);schedule();return true;
 }
+function resumeRound(){return restoreRound(peekRound()||peekAuto());}
 function resetGame(){G.gameScore=0;G.levels=[2,2];G.declarer=null;G.aFails=[0,0];G.prevFinish=null;G.round=0;clearRound();save();}
 
 function startRound(){
@@ -1098,7 +1108,7 @@ function runTribute(){
   logPush({k:'sep',txt:txt.join('；')});
   setMsg(txt.join('；'));sfx('coin');
   const mine=G.returns.find(r=>r.from===0);
-  if(mine&&!AUTO){G.phase='return';G.retTo=mine.to;sel.clear();render();toast(`请选一张10及以下的牌还给${NAMES[mine.to]}`,2400);return;}
+  if(mine&&!AUTO){G.phase='return';G.retTo=mine.to;sel.clear();render();autoSaveRound();toast(`请选一张10及以下的牌还给${NAMES[mine.to]}`,2400);return;}
   render();later(()=>startPlay(leader),2000);
 }
 function humanReturn(){
@@ -1124,11 +1134,11 @@ function schedule(){
   if(G.phase!=='play')return;
   if(G.turn===0&&!AUTO){if(undoHold)undoHold=false;else pushUndo();}
   G.wait=false;G.disp[G.turn]=null;hintList=[];hintIdx=0;
-  render();
+  render();autoSaveRound();
   if(G.turn!==0||AUTO){const s=G.turn;later(()=>{if(G.phase==='play'&&G.turn===s)aiAct(s);},AUTO?40:650+Math.random()*450);}
   else if(G.lastPlay){
     const any=genPlays(G.hands[0],G.level).some(p=>beats(p.combo,G.lastPlay.combo));
-    if(!any)setMsg('没有能管上的牌，请点"不出"');else setMsg('轮到你出牌');
+    if(!any)setMsg('没有能管上的牌，请点"不要"');else setMsg('轮到你出牌');
     later(()=>sfx('turn'),300);
   }else{setMsg('轮到你出牌（任意牌型）');later(()=>sfx('turn'),300);}
 }
@@ -1160,7 +1170,7 @@ function advance(){
   if(others.every(x=>G.passed.has(x))){
     let w=lp.seat;let jf=false;
     if(isFin(w)){w=(w+2)%4;jf=true;}
-    G.turn=w;G.lastPlay=null;G.passed=new Set();G.wait=true;render();
+    G.turn=w;G.lastPlay=null;G.passed=new Set();G.wait=true;render();autoSaveRound();
     logPush({k:'sep',txt:jf?`${NAMES[w]}接风，重新出牌`:`${NAMES[w]}收下这一轮`});
     setMsg(jf?`${NAMES[w]}接风，由${NAMES[w]}出牌`:`${NAMES[w]}获得出牌权`);
     later(()=>{G.disp=[null,null,null,null];schedule();},900);
@@ -1196,7 +1206,7 @@ function endRound(){
     render();
     if(AUTO){window.__games=(window.__games||0)+1;later(startRound,50);return;}
     sfx(wt===0?'win':'lose');say(wt===0?'恭喜过A，我方获胜':'对方过A获胜',true);
-    modal('比赛结束',resWrap(body),[['再来一场',startRound],['查看战绩',openStats,true]]);return;
+    modal('比赛结束',resWrap(body),[['再来一场',startRound],['查看战绩',openStats,true]],'narrow');return;
   }
   const tag=up===3?'双下':up===2?'':'';
   body+=`<p class="${wt===0?'up':'down'}">${wt===0?'我方':'对方'}升${up}级${tag?'（'+tag+'）':''}</p>`;
@@ -1207,7 +1217,7 @@ function endRound(){
   save();render();
   if(AUTO){window.__rounds=(window.__rounds||0)+1;later(startRound,50);return;}
   sfx(wt===0?'win':'lose');
-  modal(`第${G.round}局结束`,resWrap(body),[['下一局',startRound],['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='下一局';b.onclick=()=>{$('#modal').classList.remove('show');startRound();};},true]]);
+  modal(`第${G.round}局结束`,resWrap(body),[['下一局',startRound],['战绩',()=>{openStats();const b=$('#mBtns button');b.textContent='下一局';b.onclick=()=>{$('#modal').classList.remove('show');startRound();};},true]],'narrow');
 }
 
 /* ================= 玩家操作 ================= */
@@ -1291,7 +1301,7 @@ const RULES=`<ul>
 <li><b>过A</b>：打A时须拿头游且对家不是末游才算过A获胜；打A三次不过退回打2。</li>
 </ul>
 <p style="color:#777">操作：点按或在手牌上滑动选牌，点空白处取消选择；选中后牌桌中间会实时显示牌型和能不能压过。“提示”可循环推荐出法并说明牌型。手牌自动从小到大排列（同点数从上到下♠♥♣♦，百搭在最右）；选中几张牌点“理牌”可把它们归成一列放到最左边，不选牌时点“还原”恢复自动排序。进度会自动保存在本机。</p>
-<p style="color:#777">顶栏：<b>悔牌</b> 退回上一个自己的出牌点（可连续退，AI 思考时也能退）、<b>记牌</b> 打开记牌器与出牌记录（记牌器显示每个点数在别人手里还有几张，小字是“我有/已出”）。电脑上可用键盘：空格/回车出牌、P 不出、H 提示、S 理牌、Z 悔牌、C 记牌器、L 出牌记录、Esc 关闭。</p>`;
+<p style="color:#777">顶栏：<b>悔牌</b> 退回上一个自己的出牌点（可连续退，AI 思考时也能退）、<b>记牌</b> 打开记牌器与出牌记录（记牌器显示每个点数在别人手里还有几张，小字是“我有/已出”）。电脑上可用键盘：空格/回车出牌、P 不要、H 提示、S 理牌、Z 悔牌、C 记牌器、L 出牌记录、Esc 关闭。</p>`;
 
 $('#bSort').onclick=humanSort;$('#bPlay').onclick=humanPlay;$('#bPass').onclick=humanPass;$('#bHint').onclick=humanHint;$('#bRet').onclick=humanReturn;
 $('#bUndo').onclick=humanUndo;
@@ -1397,10 +1407,13 @@ const openExit=()=>{
     ?[['保存本局并退出',()=>exitGame(true)],['不保存退出',()=>exitGame(false),true],['取消',null,true]]
     :[['退出',()=>exitGame(false)],['取消',null,true]]);
 };
+// 切后台/关页面时自动留一份断点，下次进来接着打
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')autoSaveRound();});
+window.addEventListener('pagehide',autoSaveRound);
 const had=load();
 render();
 if(AUTO){startRound();}
-else showHome();
+else{const a=peekAuto();if(a&&restoreRound(a))toast('已接着上次的牌局',1400);else showHome();}
 </script>
 </body>
 </html>
